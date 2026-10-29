@@ -1,0 +1,26 @@
+BasedOnStyle: LLVM
+IndentWidth: 2
+ColumnLimit: 0              # don't reflow your long lines
+PointerAlignment: Right     # const char *path
+SortIncludes: Never
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+  AfterClass: true
+  AfterStruct: true
+  AfterEnum: true
+  AfterNamespace: true
+  AfterControlStatement: Always
+  BeforeElse: true
+
+SeparateDefinitionBlocks: Leave
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AlignFunctionDeclarations: true
+
+AlignConsecutiveAssignments: Consecutive
+AlignAfterOpenBracket: Align
+BreakTemplateDeclarations: Yes
+AlignTrailingComments: true
+SpaceBeforeCpp11BracedList: true
