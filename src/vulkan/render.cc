@@ -1,9 +1,11 @@
 #include "render.hh"
 #include "src/platform/window.hh"
+#include "src/resource/resource_manager.hh"
 #include "src/vulkan/command.hh"
 #include "src/vulkan/context.hh"
 #include "src/vulkan/descriptor.hh"
 #include "src/vulkan/pipeline.hh"
+#include <chrono>
 
 void Render::createSyncObjects(uint32_t imageCount)
 {
@@ -46,12 +48,14 @@ void Render::init(Context &context, Command &command)
   createSyncObjects(context.getImageCount());
 }
 
+auto lastTime = std::chrono::steady_clock::now();
 void Render::draw(Context &context, Window &window, Command *command, Pipeline &pipeline,
-          Descriptor &descriptor, const Buffer &vertex, const Buffer &index, uint32_t index_count)
+                  Descriptor &descriptor, ResourceManager &resourceManger)
 {
   vkWaitForFences(m_device, 1, &m_inFlight[m_currentFrame], VK_TRUE, UINT64_MAX);
 
-  VkSwapchainKHR swapchain = context.getSwapchain();
+  auto           currentTime = std::chrono::steady_clock::now();
+  VkSwapchainKHR swapchain   = context.getSwapchain();
   uint32_t       imageIndex;
 
   VkResult result = vkAcquireNextImageKHR(m_device, swapchain, UINT64_MAX,
@@ -61,6 +65,7 @@ void Render::draw(Context &context, Window &window, Command *command, Pipeline &
   if (result == VK_ERROR_OUT_OF_DATE_KHR)
   {
     context.recreateSwapchain();
+    resourceManger.setProjectionUpdate(true);
     return;
   }
   if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
@@ -70,8 +75,9 @@ void Render::draw(Context &context, Window &window, Command *command, Pipeline &
 
   vkResetCommandBuffer(m_commandBuffers[m_currentFrame], 0);
 
-command->record(m_currentFrame, imageIndex, context, pipeline, descriptor,
-                vertex, index, index_count);
+  resourceManger.update(m_currentFrame);
+
+  command->record(m_currentFrame, imageIndex, context, pipeline, descriptor, resourceManger.drawCalls());
   VkSemaphore          waitSemaphores[]   = {m_availableSemaphores[m_currentFrame]};
   VkPipelineStageFlags waitStages[]       = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
   VkSemaphore          signalSemaphores[] = {m_finishedSemaphores[imageIndex]};
@@ -104,6 +110,7 @@ command->record(m_currentFrame, imageIndex, context, pipeline, descriptor,
       window.frameResized)
   {
     window.frameResized = false;
+    resourceManger.setProjectionUpdate(true);
     context.recreateSwapchain();
   }
   else if (result != VK_SUCCESS)
@@ -111,7 +118,10 @@ command->record(m_currentFrame, imageIndex, context, pipeline, descriptor,
     throw std::runtime_error("Failed to present swapchain image");
   }
 
-  m_currentFrame = (m_currentFrame + 1) % m_frameInFlight;
+  m_currentFrame                       = (m_currentFrame + 1) % m_frameInFlight;
+  std::chrono::duration<float> elapsed = currentTime - lastTime;
+  deltaTime                            = elapsed.count();
+  lastTime                             = currentTime;
 }
 
 void Render::destroy()

@@ -70,6 +70,7 @@ add_executable(Crux
   src/vulkan/buffer.cc
   src/vulkan/render.cc
 
+  src/resource/resource_manager.cc
   ext/vma_impl.cc
   ext/cgltf_impl.cc
 )
@@ -126,4 +127,5 @@ add_dependencies(Crux CruxShaders)
 
 target_compile_definitions(Crux PRIVATE
   SHADER_DIR="${SHADER_OUT_DIR}/"
+  MODEL_DIR="${CMAKE_CURRENT_SOURCE_DIR}/assets/models/"
 )

@@ -1,15 +1,16 @@
 #pragma once
 
 #include "src/core/pch.hh"
-#include "src/vulkan/command.hh"
 #include "src/vulkan/context.hh"
-#include <vulkan/vulkan_core.h>
 
-enum class BufferKind : VkBufferUsageFlags {
-    Vertex  = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-    Index   = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-    Uniform = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-    Storage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+class Command;
+
+enum class BufferKind : VkBufferUsageFlags
+{
+  Vertex  = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+  Index   = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+  Uniform = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+  Storage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 };
 
 class Buffer
@@ -22,13 +23,39 @@ private:
   void           *m_mapped    = nullptr;
   VkDeviceAddress m_address   = 0;
 
-void create_buffer(Context &context, VkDeviceSize size,
-                   VkBufferUsageFlags usage, VmaMemoryUsage memory_usage,
-                   VmaAllocationCreateFlags alloc_flags);
+  void create_buffer(Context &context, VkDeviceSize size,
+                     VkBufferUsageFlags usage, VmaMemoryUsage memory_usage,
+                     VmaAllocationCreateFlags alloc_flags);
+
+  void swap(Buffer &o) noexcept
+  {
+    std::swap(m_allocator, o.m_allocator);
+    std::swap(m_alloc, o.m_alloc);
+    std::swap(m_buffer, o.m_buffer);
+    std::swap(m_size, o.m_size);
+    std::swap(m_mapped, o.m_mapped);
+    std::swap(m_address, o.m_address);
+  }
 
 public:
+  Buffer() = default;
+  ~Buffer() { destroy(); }
+
+  Buffer(const Buffer &)            = delete;
+  Buffer &operator=(const Buffer &) = delete;
+  Buffer(Buffer &&other) noexcept { swap(other); }
+  Buffer &operator=(Buffer &&other) noexcept
+  {
+    if (this != &other)
+    {
+      destroy();
+      swap(other);
+    }
+    return *this;
+  }
+
   // GPU-only buffer, filled once through a staging copy.
-  void createStatic(Context &context, Command &command, BufferKind kind,
+  void createStatic(Context *context, Command *command, BufferKind kind,
                     const void *data, VkDeviceSize size, bool device_address = false);
 
   // CPU-visible buffer you can update every frame.

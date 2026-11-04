@@ -2,10 +2,14 @@
 
 #include "src/core/pch.hh"
 #include "src/vulkan/descriptor.hh"
+#include "src/vulkan/draw_call.hh"
+#include <span>
+
 
 class Context;
 class Pipeline;
 class Buffer;
+struct DrawCall;
 
 class Command
 {
@@ -21,7 +25,7 @@ public:
   void destroy();
   void record(uint32_t currentFrame, uint32_t imageIndex,
             Context &context, Pipeline &pipeline, Descriptor &descriptor,
-            const Buffer &vertex, const Buffer &index, uint32_t index_count);
+            std::span<const DrawCall> drawCalls);
   // -- gettters ---------
   std::vector<VkCommandBuffer> getBuffers() { return m_buffers; }
   VkCommandPool getPool() const { return m_pool; }

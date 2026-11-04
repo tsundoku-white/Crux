@@ -32,36 +32,36 @@ enum class Key
   Y            = 89,
   Z            = 90,
 
-  Num0         = 48,
-  Num1         = 49,
-  Num2         = 50,
-  Num3         = 51,
-  Num4         = 52,
-  Num5         = 53,
-  Num6         = 54,
-  Num7         = 55,
-  Num8         = 56,
-  Num9         = 57,
+  NUM0         = 48,
+  NUM1         = 49,
+  NUM2         = 50,
+  NUM3         = 51,
+  NUM4         = 52,
+  NUM5         = 53,
+  NUM6         = 54,
+  NUM7         = 55,
+  NUM8         = 56,
+  NUM9         = 57,
 
-  Escape       = 256,
-  Enter        = 257,
-  Tab          = 258,
-  Backspace    = 259,
-  Insert       = 260,
-  Delete       = 261,
-  Right        = 262,
-  Left         = 263,
-  Down         = 264,
-  Up           = 265,
-  PageUp       = 266,
-  PageDown     = 267,
-  Home         = 268,
-  End          = 269,
-  CapsLock     = 280,
-  ScrollLock   = 281,
-  NumLock      = 282,
-  PrintScreen  = 283,
-  Pause        = 284,
+  ESCAPE       = 256,
+  ENTER        = 257,
+  TAB          = 258,
+  BACKSPACE    = 259,
+  INSERT       = 260,
+  DELETE       = 261,
+  RIGHT        = 262,
+  LEFT         = 263,
+  DOWN         = 264,
+  UP           = 265,
+  PAGEUP       = 266,
+  PAGEDOWN     = 267,
+  HOME         = 268,
+  END          = 269,
+  CAPSLOCK     = 280,
+  SCROLLLOCK   = 281,
+  NUMLOCK      = 282,
+  PRINTSCREEN  = 283,
+  PAUSE        = 284,
 
   F1           = 290,
   F2           = 291,
@@ -76,43 +76,51 @@ enum class Key
   F11          = 300,
   F12          = 301,
 
-  LeftShift    = 340,
-  LeftControl  = 341,
-  LeftAlt      = 342,
-  LeftSuper    = 343,
-  RightShift   = 344,
-  RightControl = 345,
-  RightAlt     = 346,
-  RightSuper   = 347,
-  Space        = 32,
-  Apostrophe   = 39,
-  Comma        = 44,
-  Minus        = 45,
-  Period       = 46,
-  Slash        = 47,
-  Semicolon    = 59,
-  Equal        = 61,
-  LeftBracket  = 91,
-  Backslash    = 92,
-  RightBracket = 93,
-  GraveAccent  = 96,
+  LEFTSHIFT    = 340,
+  LEFTCONTROL  = 341,
+  LEFTALT      = 342,
+  LEFTSUPER    = 343,
+  RIGHTSHIFT   = 344,
+  RIGHTCONTROL = 345,
+  RIGHTALT     = 346,
+  RIGHTSUPER   = 347,
+  SPACE        = 32,
+  APOSTROPHE   = 39,
+  COMMA        = 44,
+  MINUS        = 45,
+  PERIOD       = 46,
+  SLASH        = 47,
+  SEMICOLON    = 59,
+  EQUAL        = 61,
+  LEFTBRACKET  = 91,
+  BACKSLASH    = 92,
+  RIGHTBRACKET = 93,
+  GRAVEACCENT  = 96,
 };
 
-class Input 
+class Input
 {
-  private:
-    GLFWwindow *m_handle  = nullptr;
+private:
+  GLFWwindow *m_handle = nullptr;
 
-    int m_currentCursorMode = GLFW_CURSOR_NORMAL;
-    bool m_isMouseCaptured = false;
-    bool m_isMouseVisible = true;
-  public:
-    void init(Window &window);
+  int  m_currentCursorMode = GLFW_CURSOR_NORMAL;
+  bool m_isMouseCaptured   = false;
+  bool m_isMouseVisible    = true;
 
-    void visibleCursor(bool value);
-    void lockCursor(bool value);
-    bool isKeyPressed(Key key);
-    bool isKeyHeld(Key key);
+  double xpos, ypos;
+  double lastXpos, lastYpos;
+  double deltaXpos, deltaYpos;
 
-    void update();
+public:
+  // -- functions ---------
+  void init(Window &window);
+
+  void visibleCursor(bool value);
+  void lockCursor(bool value);
+  bool isKeyPressed(Key key);
+  bool isKeyHeld(Key key);
+
+  glm::vec2 getMouseLocation();
+  glm::vec2 getMouseDelta();
+  void      update();
 };

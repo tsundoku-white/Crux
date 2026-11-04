@@ -69,8 +69,7 @@ static void transition(VkCommandBuffer cmd, VkImage image,
 }
 
 void Command::record(uint32_t currentFrame, uint32_t imageIndex,
-            Context &context, Pipeline &pipeline, Descriptor &descriptor,
-            const Buffer &vertex, const Buffer &index, uint32_t index_count)
+            Context &context, Pipeline &pipeline, Descriptor &descriptor, std::span<const DrawCall> drawCalls)
 {
   VkCommandBuffer cmd    = m_buffers[currentFrame];
   VkImage         image  = context.getImages()[imageIndex];
@@ -96,7 +95,7 @@ void Command::record(uint32_t currentFrame, uint32_t imageIndex,
   color.imageLayout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
   color.loadOp           = VK_ATTACHMENT_LOAD_OP_CLEAR;
   color.storeOp          = VK_ATTACHMENT_STORE_OP_STORE;
-  color.clearValue.color = {{0.0f, 0.0f, 0.0f, 1.0f}};
+  color.clearValue.color = {{0.1f, 0.2f, 0.4f, 1.0f}};
 
   VkRenderingInfo ri {};
   ri.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO;
@@ -107,17 +106,24 @@ void Command::record(uint32_t currentFrame, uint32_t imageIndex,
 
   vkCmdBeginRendering(cmd, &ri);
   vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getPipeline());
-  VkBuffer     vb[] = {vertex.handle()};
-  VkDeviceSize off[]       = {0};
-  vkCmdBindVertexBuffers(cmd, 0, 1, vb, off);
-vkCmdBindIndexBuffer(cmd, index.handle(), 0, VK_INDEX_TYPE_UINT32);
   vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayout(), 0, 1, &descriptor.getSets()[currentFrame], 0, nullptr);
   VkViewport vp {0.0f, 0.0f, (float)extent.width, (float)extent.height,
                  0.0f, 1.0f};
   VkRect2D   sc {{0, 0}, extent};
+
   vkCmdSetViewport(cmd, 0, 1, &vp);
   vkCmdSetScissor(cmd, 0, 1, &sc);
-  vkCmdDrawIndexed(cmd, index_count, 1, 0, 0, 0);
+
+  for (const DrawCall &d : drawCalls)
+{
+  VkDeviceSize offset = 0;
+  vkCmdBindVertexBuffers(cmd, 0, 1, &d.vertexBuffer, &offset);
+  vkCmdBindIndexBuffer(cmd, d.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+  // vkCmdPushConstants(...) once the pipeline layout has the range
+  vkCmdDrawIndexed(cmd, d.indexCount, d.instanceCount, d.firstIndex,
+                   d.vertexOffset, d.firstInstance);
+}
+
   vkCmdEndRendering(cmd);
 
   transition(cmd, image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,

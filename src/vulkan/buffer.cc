@@ -1,6 +1,6 @@
 #include "buffer.hh"
 #include "src/core/pch.hh"
-#include <vulkan/vulkan_core.h>
+#include "src/vulkan/command.hh"
 
 void Buffer::create_buffer(Context &context, VkDeviceSize size,
                    VkBufferUsageFlags usage, VmaMemoryUsage memory_usage,
@@ -71,14 +71,14 @@ void Buffer::copy(Context &context, Command &command, VkBuffer src, VkBuffer dst
     vkFreeCommandBuffers(context.getDevice(), command.getPool(), 1, &cmd);
 }
 
-void Buffer::createStatic(Context &context, Command &command, BufferKind kind, const void *data, VkDeviceSize size, bool device_address)
+void Buffer::createStatic(Context *context, Command *command, BufferKind kind, const void *data, VkDeviceSize size, bool device_address)
 {
-  m_allocator = context.getAllocator();
+  m_allocator = context->getAllocator();
 
   Buffer staging {};
   staging.m_allocator = m_allocator;
 
-  staging.create_buffer(context, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+  staging.create_buffer(*context, size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                         VMA_MEMORY_USAGE_AUTO,
                         VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT);
   std::memcpy(staging.m_mapped, data, size);
@@ -87,8 +87,8 @@ void Buffer::createStatic(Context &context, Command &command, BufferKind kind, c
   if (device_address)
     usage |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
-  create_buffer(context, size, usage, VMA_MEMORY_USAGE_AUTO, 0);
-  copy(context, command, staging.m_buffer, m_buffer, size);
+  create_buffer(*context, size, usage, VMA_MEMORY_USAGE_AUTO, 0);
+  copy(*context, *command, staging.m_buffer, m_buffer, size);
   staging.destroy();
 }
 
@@ -116,4 +116,10 @@ void Buffer::destroy()
 {
   if (m_buffer != VK_NULL_HANDLE)
     vmaDestroyBuffer(m_allocator, m_buffer, m_alloc);
+
+  m_buffer  = VK_NULL_HANDLE;
+  m_alloc   = VK_NULL_HANDLE;
+  m_mapped  = nullptr;
+  m_size    = 0;
+  m_address = 0;
 }

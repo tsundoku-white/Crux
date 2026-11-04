@@ -1,6 +1,7 @@
 #pragma once
 
 #include "src/core/pch.hh"
+#include "src/resource/resource_manager.hh"
 #include "src/vulkan/command.hh"
 #include "src/vulkan/context.hh"
 #include "src/vulkan/descriptor.hh"
@@ -18,7 +19,6 @@ private:
   VkQueue                      m_graphicsQueue = VK_NULL_HANDLE;
   VkQueue                      m_presentQueue  = VK_NULL_HANDLE;
   std::vector<VkCommandBuffer> m_commandBuffers;
-
   uint32_t m_frameInFlight = 3;
 
   std::vector<VkSemaphore> m_availableSemaphores = {};
@@ -27,10 +27,11 @@ private:
   uint32_t                 m_currentFrame        = 0;
 
   void createSyncObjects(uint32_t imageCount);
-
 public:
   void init(Context &context, Command &command);
   void destroy();
   void draw(Context &context, Window &window, Command *command, Pipeline &pipeline,
-          Descriptor &descriptor, const Buffer &vertex, const Buffer &index, uint32_t index_count);
+          Descriptor &descriptor, ResourceManager &resourceManager);
+
+  float deltaTime = 0;
 };

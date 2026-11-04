@@ -1,15 +1,10 @@
 #pragma once
 
 #include "src/core/pch.hh"
+#include "src/vulkan/UBO.hh"
+#include <cstdint>
 
 class Context;
-
-struct UBO
-{
-  glm::mat4 projectionMatrix {1.f};
-  glm::mat4 viewMatrix {1.f};
-  glm::mat4 model {1.f};
-};
 
 class Descriptor
 {
@@ -30,10 +25,10 @@ public:
   void destroy();
 
   template <typename T>
-  void uploadToGPU(uint32_t currentFrame, const T *data, uint32_t size)
+  void uploadToGPU(uint32_t currentFrame, const T *data, uint32_t size, uint32_t offset)
   {
-    memcpy(m_mapped[currentFrame], data, size);
-    vmaFlushAllocation(m_allocator, m_allocs[currentFrame], 0, size);
+    memcpy(static_cast<char*>(m_mapped[currentFrame]) + offset, data, size);
+    vmaFlushAllocation(m_allocator, m_allocs[currentFrame], offset, size);
   }
 
   VkDescriptorSetLayout getLayout() const { return m_layout; }

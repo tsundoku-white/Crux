@@ -23,6 +23,7 @@ private:
   std::vector<VkImage>     m_images;
   std::vector<VkImageView> m_imageViews;
 
+  bool m_vsync = false;
 public:
   // -- functions ----------
   void init(Window &window, bool enabled_vsync);

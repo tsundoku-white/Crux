@@ -1,5 +1,6 @@
 #pragma once
 
+#include "src/ecs/register.hh"
 #include "src/platform/window.hh"
 #include "src/platform/input.hh"
 #include "src/vulkan/context.hh"
@@ -8,7 +9,7 @@
 #include "src/vulkan/command.hh"
 #include "src/vulkan/buffer.hh"
 #include "src/vulkan/render.hh"
-#include <cstdint>
+#include "src/resource/resource_manager.hh"
 
 class Engine
 {
@@ -19,11 +20,8 @@ private:
   Pipeline   m_pipeline;
   Command    m_command;
   Descriptor m_descriptor;
+  ResourceManager m_resourceManager;
   Render     m_render;
-
-  Buffer   m_vertex_buffer;
-  Buffer   m_index_buffer;
-  uint32_t m_index_count = 0;
 
 public:
   // -- setup ----------
@@ -32,9 +30,11 @@ public:
   void destroy();
   void close();
   void render();
-  // -- Input ------------
+  // -- models ------------
   Input input;
+  Registry registery;
 
+  float deltaTime = 0;
   // frames
   uint32_t frames_in_flight = 3;
 
