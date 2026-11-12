@@ -11,6 +11,7 @@ enum class BufferKind : VkBufferUsageFlags
   Index   = VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
   Uniform = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
   Storage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+  Texture = VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 };
 
 class Buffer
@@ -23,9 +24,8 @@ private:
   void           *m_mapped    = nullptr;
   VkDeviceAddress m_address   = 0;
 
-  void create_buffer(Context &context, VkDeviceSize size,
-                     VkBufferUsageFlags usage, VmaMemoryUsage memory_usage,
-                     VmaAllocationCreateFlags alloc_flags);
+  void create_buffer(Context &context, VkDeviceSize size, VkBufferUsageFlags usage,
+                     VmaMemoryUsage memory_usage, VmaAllocationCreateFlags alloc_flags);
 
   void swap(Buffer &o) noexcept
   {
@@ -54,9 +54,10 @@ public:
     return *this;
   }
 
+  VkBuffer getBuffer() const { return m_buffer; }
   // GPU-only buffer, filled once through a staging copy.
-  void createStatic(Context *context, Command *command, BufferKind kind,
-                    const void *data, VkDeviceSize size, bool device_address = false);
+  void createStatic(Context *context, Command *command, BufferKind kind, const void *data,
+                    VkDeviceSize size, bool device_address = false);
 
   // CPU-visible buffer you can update every frame.
   void createDynamic(Context &context, BufferKind kind, VkDeviceSize size,

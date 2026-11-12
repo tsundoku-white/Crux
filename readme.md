@@ -1,13 +1,13 @@
 ## Crux 
 
 ## What is done so far?
-- not much just min vulkan setup.
+- models loading, windowing, inputs, ecs.
 
 ## What is the scope of the project?
 
 - vulkan    (malti-threaded)
 - texture   (auto batching)
-- models    (auto batching)
+- [X] models    (auto batching)
 - materials (pbr)
 - ecs       (sparse & dense)
 - msaa 

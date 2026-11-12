@@ -1,26 +1,29 @@
+---
+Language: Cpp
 BasedOnStyle: LLVM
+
+# -- Layout --------------------------------------------------------------
 IndentWidth: 2
-ColumnLimit: 0              # don't reflow your long lines
-PointerAlignment: Right     # const char *path
-SortIncludes: Never
+ContinuationIndentWidth: 4
+ColumnLimit: 100
+UseTab: Never
+BreakBeforeBraces: Allman
+AccessModifierOffset: -2
+NamespaceIndentation: All
 
-BreakBeforeBraces: Custom
-BraceWrapping:
-  AfterFunction: true
-  AfterClass: true
-  AfterStruct: true
-  AfterEnum: true
-  AfterNamespace: true
-  AfterControlStatement: Always
-  BeforeElse: true
-
-SeparateDefinitionBlocks: Leave
-AlignConsecutiveDeclarations:
-  Enabled: true
-  AlignFunctionDeclarations: true
-
+# -- Alignment (class members, consecutive assignments) ------------------
+AlignConsecutiveDeclarations: Consecutive
 AlignConsecutiveAssignments: Consecutive
-AlignAfterOpenBracket: Align
-BreakTemplateDeclarations: Yes
 AlignTrailingComments: true
+
+# -- Pointers / braces / spacing ------------------------------------------
+PointerAlignment: Right
+Cpp11BracedListStyle: true
 SpaceBeforeCpp11BracedList: true
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+
+# -- Includes: never reorder (pch / platform headers can depend on order) --
+SortIncludes: Never
+...

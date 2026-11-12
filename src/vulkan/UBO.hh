@@ -7,4 +7,3 @@ struct UBO
   glm::mat4 viewMatrix {1.f};
   glm::mat4 model {1.f};
 };
-

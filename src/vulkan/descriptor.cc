@@ -63,8 +63,8 @@ void Descriptor::init(Context &context, uint32_t framesInFlight)
     allocCreate.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
     VmaAllocationInfo allocOut {};
-    if (vmaCreateBuffer(m_allocator, &bufInfo, &allocCreate,
-                        &m_buffers[i], &m_allocs[i], &allocOut) != VK_SUCCESS)
+    if (vmaCreateBuffer(m_allocator, &bufInfo, &allocCreate, &m_buffers[i], &m_allocs[i],
+                        &allocOut) != VK_SUCCESS)
       throw std::runtime_error("failed to create UBO buffer!");
 
     m_mapped[i] = allocOut.pMappedData;

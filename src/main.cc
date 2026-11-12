@@ -3,20 +3,16 @@
 int main()
 {
   Engine engine;
-  engine.init();
   engine.input.visibleCursor(false);
   engine.input.lockCursor(true);
 
-  Entity freeCam = engine.registery.create()
-                       .add(Camera {.fov = 110.f})
-                       .add(Transform {.location = {0, 0, 7}});
+  Entity freeCam =
+      engine.registery.create().add(Camera {.fov = 110.f}).add(Transform {.location = {0, 0, 7}});
 
-  Entity Model = engine.registery.create()
-                     .add(Mesh {})
-                     .add(Transform {});
+  Entity Model = engine.registery.create().add(Mesh {}).add(Transform {});
 
-  constexpr float moveSpeed   = 5.f;      // units per second
-  constexpr float sensitivity = 0.0025f;  
+  constexpr float moveSpeed   = 5.f;
+  constexpr float sensitivity = 0.0025f;
   constexpr float maxPitch    = glm::radians(89.f);
 
   float yaw   = 0.f;
@@ -50,12 +46,11 @@ int main()
     if (glm::dot(dir, dir) > 0.f)
       cam.location += glm::normalize(dir) * moveSpeed * engine.deltaTime;
 
-    // Look: yaw about WORLD up, pitch about the camera's LOCAL right.
     glm::vec2 mouse_dt = engine.input.getMouseDelta();
-    yaw   -= mouse_dt.x * sensitivity;
-    pitch  = glm::clamp(pitch + mouse_dt.y * sensitivity, -maxPitch, maxPitch);
-    cam.rotation = glm::angleAxis(yaw, glm::vec3(0, 1, 0)) *
-                   glm::angleAxis(pitch, glm::vec3(1, 0, 0));
+    yaw -= mouse_dt.x * sensitivity;
+    pitch = glm::clamp(pitch + mouse_dt.y * sensitivity, -maxPitch, maxPitch);
+    cam.rotation =
+        glm::angleAxis(yaw, glm::vec3(0, 1, 0)) * glm::angleAxis(pitch, glm::vec3(1, 0, 0));
 
     engine.render();
     i += engine.deltaTime;
@@ -65,5 +60,4 @@ int main()
       i = 0;
     }
   }
-  engine.destroy();
 }

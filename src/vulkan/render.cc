@@ -24,16 +24,16 @@ void Render::createSyncObjects(uint32_t imageCount)
 
   for (size_t i = 0; i < m_frameInFlight; i++)
   {
-    if (vkCreateSemaphore(m_device, &semaphoreInfo, nullptr,
-                          &m_availableSemaphores[i]) != VK_SUCCESS ||
+    if (vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_availableSemaphores[i]) !=
+            VK_SUCCESS ||
         vkCreateFence(m_device, &fenceInfo, nullptr, &m_inFlight[i]) != VK_SUCCESS)
       throw std::runtime_error("failed to create synchronization objects");
   }
 
   for (size_t i = 0; i < imageCount; i++)
   {
-    if (vkCreateSemaphore(m_device, &semaphoreInfo, nullptr,
-                          &m_finishedSemaphores[i]) != VK_SUCCESS)
+    if (vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_finishedSemaphores[i]) !=
+        VK_SUCCESS)
       throw std::runtime_error("failed to create synchronization objects");
   }
 }
@@ -58,9 +58,9 @@ void Render::draw(Context &context, Window &window, Command *command, Pipeline &
   VkSwapchainKHR swapchain   = context.getSwapchain();
   uint32_t       imageIndex;
 
-  VkResult result = vkAcquireNextImageKHR(m_device, swapchain, UINT64_MAX,
-                                          m_availableSemaphores[m_currentFrame], VK_NULL_HANDLE,
-                                          &imageIndex);
+  VkResult result =
+      vkAcquireNextImageKHR(m_device, swapchain, UINT64_MAX, m_availableSemaphores[m_currentFrame],
+                            VK_NULL_HANDLE, &imageIndex);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR)
   {
@@ -77,7 +77,8 @@ void Render::draw(Context &context, Window &window, Command *command, Pipeline &
 
   resourceManger.update(m_currentFrame);
 
-  command->record(m_currentFrame, imageIndex, context, pipeline, descriptor, resourceManger.drawCalls());
+  command->record(m_currentFrame, imageIndex, context, pipeline, descriptor,
+                  resourceManger.drawCalls());
   VkSemaphore          waitSemaphores[]   = {m_availableSemaphores[m_currentFrame]};
   VkPipelineStageFlags waitStages[]       = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
   VkSemaphore          signalSemaphores[] = {m_finishedSemaphores[imageIndex]};
@@ -106,8 +107,7 @@ void Render::draw(Context &context, Window &window, Command *command, Pipeline &
 
   result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
 
-  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR ||
-      window.frameResized)
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.frameResized)
   {
     window.frameResized = false;
     resourceManger.setProjectionUpdate(true);

@@ -1,18 +1,9 @@
 #include "resource_manager.hh"
-#include "src/ecs/components/transform.hh"
-#include "src/vulkan/UBO.hh"
-#include "src/vulkan/command.hh"
+#include "src/vulkan/buffer.hh"
 #include "src/vulkan/context.hh"
 #include "src/vulkan/descriptor.hh"
-#include <cstddef>
-#include <cstdint>
-#include <glm/ext/matrix_clip_space.hpp>
-#include <glm/ext/matrix_float4x4.hpp>
-#include <glm/ext/matrix_transform.hpp>
-#include <glm/ext/quaternion_transform.hpp>
-#include <glm/ext/vector_float3.hpp>
-#include <glm/trigonometric.hpp>
 #include <cgltf.h>
+#include <stb_image.h>
 
 void ResourceManager::updateCamera()
 {
@@ -29,12 +20,14 @@ void ResourceManager::updateCamera()
 
     if (m_prespectiveUpdate)
     {
-      m_aspectRatio          = static_cast<float>(m_context->getExtent2D().width) /
-                               static_cast<float>(m_context->getExtent2D().height);
-      m_ubo.projectionMatrix = glm::perspective(glm::radians(camera->fov), m_aspectRatio, camera->near, camera->far);
+      m_aspectRatio = static_cast<float>(m_context->getExtent2D().width) /
+                      static_cast<float>(m_context->getExtent2D().height);
+      m_ubo.projectionMatrix =
+          glm::perspective(glm::radians(camera->fov), m_aspectRatio, camera->near, camera->far);
       m_ubo.projectionMatrix[1][1] *= -1.f;
     }
-    m_ubo.viewMatrix = glm::lookAt(transform->location, transform->location + transform->forward, transform->up);
+    m_ubo.viewMatrix =
+        glm::lookAt(transform->location, transform->location + transform->forward, transform->up);
     m_descriptor->uploadToGPU(m_currentFrame, &m_ubo, sizeof(UBO), 0);
     break;
   }
@@ -67,12 +60,16 @@ void ResourceManager::createModels()
     {
       std::print("Failed to load Mesh\n");
     }
-    mesh->indexCount = mesh->indexData.size();
-
     mesh->vertexBuffer.createStatic(m_context, m_command, BufferKind::Vertex,
-                                    mesh->vertexData.data(), sizeof(Vertex) * mesh->vertexData.size());
-    mesh->indexBuffer.createStatic(m_context, m_command, BufferKind::Index,
-                                   mesh->indexData.data(), sizeof(uint32_t) * mesh->indexData.size());
+                                    mesh->vertexData.data(),
+                                    std::span {mesh->vertexData}.size_bytes());
+
+    mesh->indexBuffer.createStatic(m_context, m_command, BufferKind::Index, mesh->indexData.data(),
+                                   std::span {mesh->indexData}.size_bytes());
+
+    mesh->textureBuffer.createStatic(m_context, m_command, BufferKind::Texture,
+                                     mesh->textureData.data(),
+                                     std::span {mesh->textureData}.size_bytes());
   }
 }
 
@@ -93,14 +90,16 @@ void ResourceManager::buildDrawCalls()
     d.vertexBuffer = mesh->vertexBuffer.handle();
     d.indexBuffer  = mesh->indexBuffer.handle();
     d.indexCount   = mesh->indexCount;
-    d.model        = glm::translate(glm::mat4(1.f), transform->location) * glm::mat4_cast(transform->rotation) * glm::scale(glm::mat4(1.f), transform->scale);
+    d.model = glm::translate(glm::mat4(1.f), transform->location) *
+              glm::mat4_cast(transform->rotation) * glm::scale(glm::mat4(1.f), transform->scale);
 
-    m_ubo.model = d.model; // single mesh only
+    m_ubo.model = d.model;
     m_drawCalls.push_back(d);
   }
 }
 
-void ResourceManager::init(Registry &registry, Context &context, Descriptor &descriptor, Command &command)
+void ResourceManager::init(Registry &registry, Context &context, Descriptor &descriptor,
+                           Command &command)
 {
   m_registry   = &registry;
   m_context    = &context;
@@ -142,9 +141,8 @@ void ResourceManager::destroy()
   m_drawCalls.clear();
 }
 
-bool ResourceManager::loadMeshData(std::vector<Vertex>   &vertices,
-                                   std::vector<uint32_t> &indices,
-                                   const std::string     &path)
+bool ResourceManager::loadMeshData(std::vector<Vertex> &vertices, std::vector<uint32_t> &indices,
+                                   const std::string &path)
 {
   cgltf_options options = {};
   cgltf_data   *data    = nullptr;
@@ -180,15 +178,40 @@ bool ResourceManager::loadMeshData(std::vector<Vertex>   &vertices,
       const uint32_t baseVertex = static_cast<uint32_t>(vertices.size());
       vertices.resize(baseVertex + posAcc->count);
 
-      glm::vec3 baseColor {1.f};
-      if (prim.material && prim.material->has_pbr_metallic_roughness)
+      for (size_t i = 0; i < data->materials_count; ++i)
       {
-        const float *c = prim.material->pbr_metallic_roughness.base_color_factor;
-        baseColor      = {c[0], c[1], c[2]};
-      }
+        cgltf_material *mat = &data->materials[i];
 
+        cgltf_texture_view *base_color_view = NULL;
+        cgltf_texture_view *normal_view     = NULL;
+        cgltf_texture_view *roughness_view  = NULL; // Shared metallic-roughness map
+
+        // 1. Get Base Color & Metallic/Roughness (from PBR Metallic Roughness)
+        if (mat->has_pbr_metallic_roughness)
+        {
+          base_color_view = &mat->pbr_metallic_roughness.base_color_texture;
+          roughness_view  = &mat->pbr_metallic_roughness.metallic_roughness_texture;
+        }
+
+        // 2. Get Normal Map (lives directly on the material structure)
+        if (mat->normal_texture.texture != NULL)
+        {
+          normal_view = &mat->normal_texture;
+        }
+
+        // 3. Process the images
+        if (base_color_view && base_color_view->texture)
+        {
+        }
+        if (normal_view && normal_view->texture)
+        {
+        }
+        if (roughness_view && roughness_view->texture)
+        {
+        }
+      }
       for (size_t i = 0; i < posAcc->count; ++i)
-        vertices[baseVertex + i].color = baseColor;
+        vertices[baseVertex + i].color = glm::vec3 {1, 1, 1};
 
       for (size_t a = 0; a < prim.attributes_count; ++a)
       {
@@ -216,7 +239,7 @@ bool ResourceManager::loadMeshData(std::vector<Vertex>   &vertices,
             break;
           case cgltf_attribute_type_color:
             if (attr.index == 0)
-              v.color = baseColor * glm::vec3(f[0], f[1], f[2]);
+              v.color = glm::vec3 {1, 1, 1} * glm::vec3(f[0], f[1], f[2]);
             break;
           default:
             break;
@@ -224,11 +247,11 @@ bool ResourceManager::loadMeshData(std::vector<Vertex>   &vertices,
         }
       }
 
-      // Indices (offset by baseVertex so multiple primitives work)
       if (prim.indices)
       {
         for (size_t i = 0; i < prim.indices->count; ++i)
-          indices.push_back(baseVertex + static_cast<uint32_t>(cgltf_accessor_read_index(prim.indices, i)));
+          indices.push_back(baseVertex +
+                            static_cast<uint32_t>(cgltf_accessor_read_index(prim.indices, i)));
       }
       else // non-indexed primitive
       {
@@ -240,4 +263,17 @@ bool ResourceManager::loadMeshData(std::vector<Vertex>   &vertices,
 
   cgltf_free(data);
   return true;
+}
+
+void loadTexture(std::vector<uint32_t> &textureData, std::string &path)
+{
+  int texWidth, texHeight, texChannels;
+
+  unsigned char *pixels = stbi_load(path.c_str(), &texWidth, &texHeight, &texChannels, 4);
+
+  if (!pixels)
+  {
+    throw std::runtime_error("failed to load texture image!");
+  }
+  stbi_image_free(pixels);
 }

@@ -6,10 +6,12 @@
 
 struct Mesh
 {
-  std::vector<Vertex>   vertexData = {};
-  std::vector<uint32_t> indexData  = {};
-  uint32_t              indexCount = 0;
+  std::vector<Vertex>   vertexData  = {};
+  std::vector<uint32_t> indexData   = {};
+  std::vector<uint32_t> textureData = {};
+  uint32_t              indexCount  = 0;
 
-  Buffer vertexBuffer = {};
-  Buffer indexBuffer  = {};
+  Buffer vertexBuffer  = {};
+  Buffer indexBuffer   = {};
+  Buffer textureBuffer = {};
 };

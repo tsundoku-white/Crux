@@ -19,7 +19,7 @@ private:
   VkQueue                      m_graphicsQueue = VK_NULL_HANDLE;
   VkQueue                      m_presentQueue  = VK_NULL_HANDLE;
   std::vector<VkCommandBuffer> m_commandBuffers;
-  uint32_t m_frameInFlight = 3;
+  uint32_t                     m_frameInFlight = 3;
 
   std::vector<VkSemaphore> m_availableSemaphores = {};
   std::vector<VkSemaphore> m_finishedSemaphores  = {};
@@ -27,11 +27,12 @@ private:
   uint32_t                 m_currentFrame        = 0;
 
   void createSyncObjects(uint32_t imageCount);
+
 public:
   void init(Context &context, Command &command);
   void destroy();
   void draw(Context &context, Window &window, Command *command, Pipeline &pipeline,
-          Descriptor &descriptor, ResourceManager &resourceManager);
+            Descriptor &descriptor, ResourceManager &resourceManager);
 
   float deltaTime = 0;
 };

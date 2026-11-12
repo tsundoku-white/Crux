@@ -10,14 +10,14 @@ void Command::init(Context &context, uint32_t framesInFlight)
 {
   // allocate device in local ref.
   m_device = context.getDevice();
+  m_queue  = context.getGraphicsQueue();
 
   VkCommandPoolCreateInfo poolInfo {};
   poolInfo.sType            = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
   poolInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
   poolInfo.queueFamilyIndex = context.getGraphicsFamily();
 
-  if (vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_pool) !=
-      VK_SUCCESS)
+  if (vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_pool) != VK_SUCCESS)
   {
     throw std::runtime_error("failed to create command pool!");
   }
@@ -31,8 +31,7 @@ void Command::init(Context &context, uint32_t framesInFlight)
   allocInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
   allocInfo.commandBufferCount = (uint32_t)m_buffers.size();
 
-  if (vkAllocateCommandBuffers(m_device, &allocInfo, m_buffers.data()) !=
-      VK_SUCCESS)
+  if (vkAllocateCommandBuffers(m_device, &allocInfo, m_buffers.data()) != VK_SUCCESS)
   {
     throw std::runtime_error("failed to allocate command buffers!");
   }
@@ -44,8 +43,7 @@ void Command::destroy()
     vkDestroyCommandPool(m_device, m_pool, nullptr);
 }
 
-static void transition(VkCommandBuffer cmd, VkImage image,
-                       VkImageLayout from, VkImageLayout to,
+static void transition(VkCommandBuffer cmd, VkImage image, VkImageLayout from, VkImageLayout to,
                        VkPipelineStageFlags2 srcStage, VkAccessFlags2 srcAccess,
                        VkPipelineStageFlags2 dstStage, VkAccessFlags2 dstAccess)
 {
@@ -68,8 +66,43 @@ static void transition(VkCommandBuffer cmd, VkImage image,
   vkCmdPipelineBarrier2(cmd, &dep);
 }
 
-void Command::record(uint32_t currentFrame, uint32_t imageIndex,
-            Context &context, Pipeline &pipeline, Descriptor &descriptor, std::span<const DrawCall> drawCalls)
+VkCommandBuffer Command::onceStart()
+{
+  VkCommandBufferAllocateInfo allocInfo {};
+  allocInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+  allocInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+  allocInfo.commandPool        = m_pool;
+  allocInfo.commandBufferCount = 1;
+
+  VkCommandBuffer commandBuffer;
+  vkAllocateCommandBuffers(m_device, &allocInfo, &commandBuffer);
+
+  VkCommandBufferBeginInfo beginInfo {};
+  beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+  beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+  vkBeginCommandBuffer(commandBuffer, &beginInfo);
+  return commandBuffer;
+}
+
+void Command::onceEnd(VkCommandBuffer commandBuffer)
+{
+  vkEndCommandBuffer(commandBuffer);
+
+  VkSubmitInfo submitInfo {};
+  submitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.commandBufferCount = 1;
+  submitInfo.pCommandBuffers    = &commandBuffer;
+
+  vkQueueSubmit(m_queue, 1, &submitInfo, VK_NULL_HANDLE);
+  vkQueueWaitIdle(m_queue);
+
+  vkFreeCommandBuffers(m_device, m_pool, 1, &commandBuffer);
+}
+
+void Command::record(uint32_t currentFrame, uint32_t imageIndex, Context &context,
+                     Pipeline &pipeline, Descriptor &descriptor,
+                     std::span<const DrawCall> drawCalls)
 {
   VkCommandBuffer cmd    = m_buffers[currentFrame];
   VkImage         image  = context.getImages()[imageIndex];
@@ -82,9 +115,7 @@ void Command::record(uint32_t currentFrame, uint32_t imageIndex,
   if (vkBeginCommandBuffer(cmd, &begin) != VK_SUCCESS)
     throw std::runtime_error("failed to begin command buffer!");
 
-  // UNDEFINED -> COLOR_ATTACHMENT_OPTIMAL
-  transition(cmd, image, VK_IMAGE_LAYOUT_UNDEFINED,
-             VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+  transition(cmd, image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
              VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT, 0,
              VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
              VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
@@ -106,31 +137,29 @@ void Command::record(uint32_t currentFrame, uint32_t imageIndex,
 
   vkCmdBeginRendering(cmd, &ri);
   vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getPipeline());
-  vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayout(), 0, 1, &descriptor.getSets()[currentFrame], 0, nullptr);
-  VkViewport vp {0.0f, 0.0f, (float)extent.width, (float)extent.height,
-                 0.0f, 1.0f};
+  vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.getLayout(), 0, 1,
+                          &descriptor.getSets()[currentFrame], 0, nullptr);
+  VkViewport vp {0.0f, 0.0f, (float)extent.width, (float)extent.height, 0.0f, 1.0f};
   VkRect2D   sc {{0, 0}, extent};
 
   vkCmdSetViewport(cmd, 0, 1, &vp);
   vkCmdSetScissor(cmd, 0, 1, &sc);
 
   for (const DrawCall &d : drawCalls)
-{
-  VkDeviceSize offset = 0;
-  vkCmdBindVertexBuffers(cmd, 0, 1, &d.vertexBuffer, &offset);
-  vkCmdBindIndexBuffer(cmd, d.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-  // vkCmdPushConstants(...) once the pipeline layout has the range
-  vkCmdDrawIndexed(cmd, d.indexCount, d.instanceCount, d.firstIndex,
-                   d.vertexOffset, d.firstInstance);
-}
+  {
+    VkDeviceSize offset = 0;
+    vkCmdBindVertexBuffers(cmd, 0, 1, &d.vertexBuffer, &offset);
+    vkCmdBindIndexBuffer(cmd, d.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+    // vkCmdPushConstants(...) once the pipeline layout has the range
+    vkCmdDrawIndexed(cmd, d.indexCount, d.instanceCount, d.firstIndex, d.vertexOffset,
+                     d.firstInstance);
+  }
 
   vkCmdEndRendering(cmd);
 
-  transition(cmd, image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+  transition(cmd, image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
              VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-             VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
-             VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT, 0);
+             VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_2_BOTTOM_OF_PIPE_BIT, 0);
 
   if (vkEndCommandBuffer(cmd) != VK_SUCCESS)
     throw std::runtime_error("failed to end command buffer!");

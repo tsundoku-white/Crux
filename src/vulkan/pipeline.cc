@@ -38,8 +38,7 @@ VkShaderModule Pipeline::createShaderModule(const std::vector<char> &code)
   createInfo.codeSize = code.size();
   createInfo.pCode    = reinterpret_cast<const uint32_t *>(code.data());
   VkShaderModule shaderModule;
-  if (vkCreateShaderModule(m_device, &createInfo, nullptr, &shaderModule) !=
-      VK_SUCCESS)
+  if (vkCreateShaderModule(m_device, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
   {
     throw std::runtime_error("failed to create shader module!");
   }
@@ -75,35 +74,25 @@ void Pipeline::init(Context &context, Descriptor &descriptor)
   VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
   // set rendering draw direction (top to bottom row by row).
-  std::vector<VkDynamicState> dynamicStates = {
-      VK_DYNAMIC_STATE_VIEWPORT,
-     VK_DYNAMIC_STATE_SCISSOR};
+  std::vector<VkDynamicState> dynamicStates = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
   // descriptor setup.
   auto bindingDescription    = Vertex::getBindingDescription();
   auto attributeDescriptions = Vertex::getAttributeDescriptions();
 
   VkPipelineVertexInputStateCreateInfo vertexInputInfo {};
-  vertexInputInfo.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-  vertexInputInfo.vertexBindingDescriptionCount   = 1;
-  vertexInputInfo.pVertexBindingDescriptions      = &bindingDescription;
-  vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-  vertexInputInfo.pVertexAttributeDescriptions    = attributeDescriptions.data();
+  vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+  vertexInputInfo.vertexBindingDescriptionCount = 1;
+  vertexInputInfo.pVertexBindingDescriptions    = &bindingDescription;
+  vertexInputInfo.vertexAttributeDescriptionCount =
+      static_cast<uint32_t>(attributeDescriptions.size());
+  vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
   // declaring that all mesh will be drawn as triangles.
   VkPipelineInputAssemblyStateCreateInfo inputAssembly {};
-  inputAssembly.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-  inputAssembly.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+  inputAssembly.sType    = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+  inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
   inputAssembly.primitiveRestartEnable = VK_FALSE;
-
-  // setting up center of screen and canvas size.
-  VkViewport viewport {};
-  viewport.x        = 0.0f;
-  viewport.y        = 0.0f;
-  viewport.width    = (float)context.getExtent2D().width;
-  viewport.height   = (float)context.getExtent2D().height;
-  viewport.minDepth = 0.0f;
-  viewport.maxDepth = 1.0f;
 
   // setting screen offset
   VkRect2D scissor {};
@@ -148,7 +137,8 @@ void Pipeline::init(Context &context, Descriptor &descriptor)
 
   // coloring fo the image.
   VkPipelineColorBlendAttachmentState colorBlendAttachment {};
-  colorBlendAttachment.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+  colorBlendAttachment.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+                                             VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
   colorBlendAttachment.blendEnable         = VK_FALSE;
   colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
   colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
@@ -216,8 +206,8 @@ void Pipeline::init(Context &context, Descriptor &descriptor)
   info.layout              = m_layout;
   info.renderPass          = VK_NULL_HANDLE;
 
-  if (vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &info, nullptr,
-                                &m_pipeline) != VK_SUCCESS)
+  if (vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &info, nullptr, &m_pipeline) !=
+      VK_SUCCESS)
     throw std::runtime_error("failed to create graphics pipeline");
 
   vkDestroyShaderModule(m_device, shaderModule, nullptr);

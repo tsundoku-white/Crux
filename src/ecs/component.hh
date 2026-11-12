@@ -8,10 +8,12 @@
 
 constexpr uint32_t INVALID_COMP_ID = std::numeric_limits<uint32_t>::max();
 
-struct IComponentPool { virtual ~IComponentPool() = default; };
+struct IComponentPool
+{
+  virtual ~IComponentPool() = default;
+};
 
-template <typename T>
-class Component : public IComponentPool
+template <typename T> class Component : public IComponentPool
 {
 public:
   void add(EntityID id, T value)
@@ -49,10 +51,7 @@ public:
     m_sparse[id] = INVALID_COMP_ID;
   }
 
-  bool has(EntityID id) const
-  {
-    return id < m_sparse.size() && m_sparse[id] != INVALID_COMP_ID;
-  }
+  bool has(EntityID id) const { return id < m_sparse.size() && m_sparse[id] != INVALID_COMP_ID; }
 
   T       *get(EntityID id) { return has(id) ? &m_components[m_sparse[id]] : nullptr; }
   const T *get(EntityID id) const { return has(id) ? &m_components[m_sparse[id]] : nullptr; }
@@ -61,7 +60,7 @@ public:
   std::span<const EntityID> entities() const { return m_dense; }
   std::span<T>              data() { return m_components; }
 
-  std::vector<T>  &getComponents() {return m_components; }
+  std::vector<T> &getComponents() { return m_components; }
 
 private:
   std::vector<uint32_t> m_sparse;     // entity id -> dense index

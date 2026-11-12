@@ -11,10 +11,10 @@ void Context::init(Window &window, bool enabled_vsync)
   // creating the instance builder.
   vkb::InstanceBuilder builder;
   auto                 inst_ret = builder.set_app_name("Example Vulkan Application")
-    .request_validation_layers()
-    .use_default_debug_messenger()
-    .require_api_version(1, 4, 0)
-    .build();
+                                      .request_validation_layers()
+                                      .use_default_debug_messenger()
+                                      .require_api_version(1, 4, 0)
+                                      .build();
 
   // checking if the instance is valid.
   if (!inst_ret)
@@ -27,7 +27,7 @@ void Context::init(Window &window, bool enabled_vsync)
 
   // creating glfw suface.
   VkResult glfw_result = glfwCreateWindowSurface(m_vkbInst, window.getHandle(),
-      nullptr, &m_surface);
+                                                 nullptr, &m_surface);
   // checking if surface is valid.
   if (glfw_result != VK_SUCCESS)
   {
@@ -45,10 +45,10 @@ void Context::init(Window &window, bool enabled_vsync)
   // creating physical device builder.
   vkb::PhysicalDeviceSelector selector {m_vkbInst};
   auto                        phys_ret =
-    selector.set_surface(m_surface)
-    .set_required_features_12(f12)
-    .set_required_features_13(f13)
-    .select();
+      selector.set_surface(m_surface)
+          .set_required_features_12(f12)
+          .set_required_features_13(f13)
+          .select();
   if (!phys_ret)
   {
     throw std::runtime_error("Failed to select Vulkan Physical Device.\n");
@@ -89,20 +89,20 @@ void Context::init(Window &window, bool enabled_vsync)
   m_graphicsQueue = gq.value();
   m_presentQueue  = pq.value();
   m_graphicsFamily =
-    m_vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
+      m_vkbDevice.get_queue_index(vkb::QueueType::graphics).value();
   m_presentFamily =
-    m_vkbDevice.get_queue_index(vkb::QueueType::present).value();
+      m_vkbDevice.get_queue_index(vkb::QueueType::present).value();
 
   // creating swapchain.
-  vkb::SwapchainBuilder swapchain_builder{m_vkbDevice};
+  vkb::SwapchainBuilder swapchain_builder {m_vkbDevice};
 
   swapchain_builder
-    .set_desired_present_mode(enabled_vsync ? VK_PRESENT_MODE_FIFO_KHR
-        : VK_PRESENT_MODE_IMMEDIATE_KHR)
-    .add_fallback_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
-    .add_fallback_present_mode(VK_PRESENT_MODE_FIFO_KHR);
+      .set_desired_present_mode(enabled_vsync ? VK_PRESENT_MODE_FIFO_KHR
+                                              : VK_PRESENT_MODE_IMMEDIATE_KHR)
+      .add_fallback_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
+      .add_fallback_present_mode(VK_PRESENT_MODE_FIFO_KHR);
 
-  auto swap_ret = swapchain_builder.build();   // build LAST, after all settings
+  auto swap_ret = swapchain_builder.build(); // build LAST, after all settings
 
   if (!swap_ret)
   {
@@ -123,7 +123,7 @@ void Context::init(Window &window, bool enabled_vsync)
   m_imageViews = std::move(views.value());
 
   // Verify what was actually selected.
-  const char* names[] = {"IMMEDIATE", "MAILBOX", "FIFO", "FIFO_RELAXED"};
+  const char *names[] = {"IMMEDIATE", "MAILBOX", "FIFO", "FIFO_RELAXED"};
   std::print("present mode: {}\n", names[m_vkbSwapchain.present_mode]);
 
   VmaAllocatorCreateInfo allocatorInfo = {};
@@ -154,19 +154,19 @@ void Context::recreateSwapchain()
 
   // build new swapchain.
   vkb::SwapchainBuilder builder {m_vkbDevice};
-    auto ret = builder
-    .set_old_swapchain(m_vkbSwapchain)
-    .set_desired_extent(width, height)
-    .set_desired_present_mode(m_vsync ? VK_PRESENT_MODE_FIFO_KHR
-                                      : VK_PRESENT_MODE_IMMEDIATE_KHR)
-    .add_fallback_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
-    .add_fallback_present_mode(VK_PRESENT_MODE_FIFO_KHR)
-    .build();
+  auto                  ret = builder
+                                  .set_old_swapchain(m_vkbSwapchain)
+                                  .set_desired_extent(width, height)
+                                  .set_desired_present_mode(m_vsync ? VK_PRESENT_MODE_FIFO_KHR
+                                                                    : VK_PRESENT_MODE_IMMEDIATE_KHR)
+                                  .add_fallback_present_mode(VK_PRESENT_MODE_MAILBOX_KHR)
+                                  .add_fallback_present_mode(VK_PRESENT_MODE_FIFO_KHR)
+                                  .build();
 
   if (!ret)
   {
     throw std::runtime_error("Failed to recreate swapchain: " +
-        ret.error().message());
+                             ret.error().message());
   }
 
   // destroying old swapchain.
@@ -187,7 +187,6 @@ void Context::destroy()
     vmaDestroyAllocator(m_allocator);
     m_allocator = VK_NULL_HANDLE;
   }
-
 
   m_vkbSwapchain.destroy_image_views(m_imageViews);
   vkb::destroy_swapchain(m_vkbSwapchain);

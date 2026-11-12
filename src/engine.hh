@@ -15,23 +15,23 @@ class Engine
 {
 private:
   // rendering
-  Window     m_window;
-  Context    m_context;
-  Pipeline   m_pipeline;
-  Command    m_command;
-  Descriptor m_descriptor;
+  Window          m_window;
+  Context         m_context;
+  Pipeline        m_pipeline;
+  Command         m_command;
+  Descriptor      m_descriptor;
   ResourceManager m_resourceManager;
-  Render     m_render;
+  Render          m_render;
 
 public:
   // -- setup ----------
-  void init();
+  Engine();
+  ~Engine();
   bool running();
-  void destroy();
   void close();
   void render();
   // -- models ------------
-  Input input;
+  Input    input;
   Registry registery;
 
   float deltaTime = 0;

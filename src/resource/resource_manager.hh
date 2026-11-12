@@ -2,13 +2,12 @@
 
 #include "src/ecs/register.hh"
 #include "src/vulkan/UBO.hh"
-#include "src/vulkan/context.hh"
-#include "src/vulkan/descriptor.hh"
 #include "src/vulkan/draw_call.hh"
-#include <cstdint>
-#include <vector>
+#include "src/core/pch.hh"
 
 class Command;
+class Context;
+class Descriptor;
 
 class ResourceManager
 {
@@ -35,7 +34,8 @@ private:
   void updateTransform();
   void updateModel();
 
-  bool loadMeshData(std::vector<Vertex> &vertex, std::vector<uint32_t> &index, const std::string &path);
+  bool loadMeshData(std::vector<Vertex> &vertex, std::vector<uint32_t> &index,
+                    const std::string &path);
 
   void buildDrawCalls();
 
@@ -45,6 +45,7 @@ public:
   void update(uint32_t currentFrame);
   void destroy();
 
-  void                      setProjectionUpdate(bool value) { m_prespectiveUpdate = value; }
+  void setProjectionUpdate(bool value) { m_prespectiveUpdate = value; }
+
   std::span<const DrawCall> drawCalls() const { return m_drawCalls; }
 };

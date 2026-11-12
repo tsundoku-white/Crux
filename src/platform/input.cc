@@ -11,27 +11,15 @@ void Input::init(Window &window)
   deltaYpos = 0.0;
 }
 
-void Input::visibleCursor(bool value)
-{
-  m_isMouseVisible = value;
-}
+void Input::visibleCursor(bool value) { m_isMouseVisible = value; }
 
-void Input::lockCursor(bool value)
-{
-  m_isMouseCaptured = value;
-}
+void Input::lockCursor(bool value) { m_isMouseCaptured = value; }
 
-bool Input::isKeyHeld(Key key)
-{
-  return glfwGetKey(m_handle, static_cast<int>(key)) == GLFW_PRESS;
-}
+bool Input::isKeyHeld(Key key) { return glfwGetKey(m_handle, static_cast<int>(key)) == GLFW_PRESS; }
 
 glm::vec2 Input::getMouseLocation() { return glm::vec2(xpos, -ypos); }
 
-glm::vec2 Input::getMouseDelta()
-{
-  return glm::vec2(deltaXpos, -deltaYpos);
-}
+glm::vec2 Input::getMouseDelta() { return glm::vec2(deltaXpos, -deltaYpos); }
 
 void Input::update()
 {
@@ -47,7 +35,7 @@ void Input::update()
 
   if (mode != m_currentCursorMode)
   {
-    glfwSetInputMode(m_handle, GLFW_CURSOR, mode); 
+    glfwSetInputMode(m_handle, GLFW_CURSOR, mode);
     m_currentCursorMode = mode;
 
     if (glfwRawMouseMotionSupported())

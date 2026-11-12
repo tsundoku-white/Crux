@@ -19,14 +19,10 @@ public:
     m_id       = 0;
   }
 
-  template <typename T>
-  Entity &add(T component);
-  template <typename T>
-  Entity &remove();
-  template <typename T>
-  bool has() const;
-  template <typename T>
-  T &get();
+  template <typename T> Entity &add(T component);
+  template <typename T> Entity &remove();
+  template <typename T> bool    has() const;
+  template <typename T> T      &get();
 
 private:
   Registry *m_registry = nullptr;

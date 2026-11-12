@@ -1,40 +1,30 @@
 #include "engine.hh"
-#include "src/core/vertex.hh"
-#include <glm/ext/matrix_float4x4.hpp>
-#include <type_traits>
 
-void Engine::init()
+Engine::Engine()
 {
-  m_window.     init();
-  m_context.    init(m_window, enable_vsync);
-  m_descriptor. init(m_context, frames_in_flight);
-  m_pipeline.   init(m_context, m_descriptor);
-  m_command.    init(m_context, frames_in_flight);
+  m_window.init();
+  m_context.init(m_window, enable_vsync);
+  m_descriptor.init(m_context, frames_in_flight);
+  m_pipeline.init(m_context, m_descriptor);
+  m_command.init(m_context, frames_in_flight);
   m_resourceManager.init(registery, m_context, m_descriptor, m_command);
-  m_render.     init(m_context, m_command);
+  m_render.init(m_context, m_command);
 
   input.init(m_window);
 }
 
-bool Engine::running()
-{
-  return !m_window.shouldClose();
-}
-
-void Engine::close() 
-{
-  m_window.setShouldClose(true);
-}
+bool Engine::running() { return !m_window.shouldClose(); }
+void Engine::close() { m_window.setShouldClose(true); }
 
 void Engine::render()
 {
   m_window.pollEvents();
   input.update();
-    m_render.draw(m_context, m_window, &m_command, m_pipeline, m_descriptor, m_resourceManager);
-    deltaTime = m_render.deltaTime;
+  m_render.draw(m_context, m_window, &m_command, m_pipeline, m_descriptor, m_resourceManager);
+  deltaTime = m_render.deltaTime;
 }
 
-void Engine::destroy()
+Engine::~Engine()
 {
   m_context.deviceWait();
 

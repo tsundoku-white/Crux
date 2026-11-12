@@ -27,10 +27,10 @@ public:
   template <typename T>
   void uploadToGPU(uint32_t currentFrame, const T *data, uint32_t size, uint32_t offset)
   {
-    memcpy(static_cast<char*>(m_mapped[currentFrame]) + offset, data, size);
+    memcpy(static_cast<char *>(m_mapped[currentFrame]) + offset, data, size);
     vmaFlushAllocation(m_allocator, m_allocs[currentFrame], offset, size);
   }
 
-  VkDescriptorSetLayout getLayout() const { return m_layout; }
+  VkDescriptorSetLayout               getLayout() const { return m_layout; }
   const std::vector<VkDescriptorSet> &getSets() const { return m_sets; }
 };
