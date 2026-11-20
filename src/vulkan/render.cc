@@ -1,0 +1,150 @@
+#include "render.hh"
+#include "src/platform/window.hh"
+#include "src/resource/resource_manager.hh"
+#include "src/vulkan/command.hh"
+#include "src/vulkan/context.hh"
+#include "src/vulkan/depth_buffer.hh"
+#include "src/vulkan/descriptor.hh"
+#include "src/vulkan/pipeline.hh"
+#include <chrono>
+
+void Render::createSyncObjects(uint32_t imageCount)
+{
+  vkGetSwapchainImagesKHR(m_device, m_swapchain, &imageCount, nullptr);
+
+  m_availableSemaphores.resize(m_frameInFlight); // per frame in flight
+  m_inFlight.resize(m_frameInFlight);            // per frame in flight
+  m_finishedSemaphores.resize(imageCount);       // per swapchain image
+
+  VkSemaphoreCreateInfo semaphoreInfo {};
+  semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+  VkFenceCreateInfo fenceInfo {};
+  fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+  fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+  for (size_t i = 0; i < m_frameInFlight; i++)
+  {
+    if (vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_availableSemaphores[i]) !=
+            VK_SUCCESS ||
+        vkCreateFence(m_device, &fenceInfo, nullptr, &m_inFlight[i]) != VK_SUCCESS)
+      throw std::runtime_error("failed to create synchronization objects");
+  }
+
+  for (size_t i = 0; i < imageCount; i++)
+  {
+    if (vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_finishedSemaphores[i]) !=
+        VK_SUCCESS)
+      throw std::runtime_error("failed to create synchronization objects");
+  }
+}
+
+void Render::recreate(Context &context, Command &command, ResourceManager &resourceManger)
+{
+  context.recreateSwapchain();
+  resourceManger.setProjectionUpdate(true);
+  m_depthBuffer->destroy();
+  m_msaa->destroy();
+
+  // msaa first: the depth buffer takes its sample count from it. getSamples() is the clamped
+  // value chosen at startup, so the sample count survives a resize.
+  m_msaa->init(context, command, context.getImageFormat(), m_msaa->getSamples());
+  m_depthBuffer->init(context, command, *m_msaa);
+}
+
+void Render::init(Context &context, Command &command, DepthBuffer &depthBuffer, Msaa &msaa)
+{
+  m_device         = context.getDevice();
+  m_swapchain      = context.getSwapchain();
+  m_graphicsQueue  = context.getGraphicsQueue();
+  m_presentQueue   = context.getPresentQueue();
+  m_commandBuffers = command.getBuffers();
+  m_depthBuffer    = &depthBuffer;
+  m_msaa           = &msaa;
+  createSyncObjects(context.getImageCount());
+}
+
+auto lastTime = std::chrono::steady_clock::now();
+void Render::draw(Context &context, Window &window, Command *command, Pipeline &pipeline,
+                  Descriptor &descriptor, TextureManager &textures, ResourceManager &resourceManger)
+{
+  vkWaitForFences(m_device, 1, &m_inFlight[m_currentFrame], VK_TRUE, UINT64_MAX);
+
+  auto           currentTime = std::chrono::steady_clock::now();
+  VkSwapchainKHR swapchain   = context.getSwapchain();
+  uint32_t       imageIndex;
+
+  VkResult result =
+      vkAcquireNextImageKHR(m_device, swapchain, UINT64_MAX, m_availableSemaphores[m_currentFrame],
+                            VK_NULL_HANDLE, &imageIndex);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR)
+  {
+    recreate(context, *command, resourceManger);
+    return;
+  }
+  if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+    throw std::runtime_error("Failed to acquire swapchain image");
+
+  vkResetFences(m_device, 1, &m_inFlight[m_currentFrame]);
+
+  vkResetCommandBuffer(m_commandBuffers[m_currentFrame], 0);
+
+  resourceManger.update(m_currentFrame);
+
+  command->record(m_currentFrame, imageIndex, context, pipeline, descriptor, textures.getSet(),
+                  *m_depthBuffer, *m_msaa, resourceManger.drawCalls(), resourceManger.skyDraw());
+  VkSemaphore          waitSemaphores[]   = {m_availableSemaphores[m_currentFrame]};
+  VkPipelineStageFlags waitStages[]       = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+  VkSemaphore          signalSemaphores[] = {m_finishedSemaphores[imageIndex]};
+
+  VkSubmitInfo submitInfo {};
+  submitInfo.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+  submitInfo.waitSemaphoreCount   = 1;
+  submitInfo.pWaitSemaphores      = waitSemaphores;
+  submitInfo.pWaitDstStageMask    = waitStages;
+  submitInfo.commandBufferCount   = 1;
+  submitInfo.pCommandBuffers      = &m_commandBuffers[m_currentFrame];
+  submitInfo.signalSemaphoreCount = 1;
+  submitInfo.pSignalSemaphores    = signalSemaphores;
+
+  if (vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_inFlight[m_currentFrame]) != VK_SUCCESS)
+    throw std::runtime_error("failed to submit draw command buffer!");
+
+  VkPresentInfoKHR presentInfo {};
+  presentInfo.sType              = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+  presentInfo.waitSemaphoreCount = 1;
+  presentInfo.pWaitSemaphores    = signalSemaphores;
+  VkSwapchainKHR swapChains[]    = {swapchain};
+  presentInfo.swapchainCount     = 1;
+  presentInfo.pSwapchains        = swapChains;
+  presentInfo.pImageIndices      = &imageIndex;
+
+  result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
+
+  if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window.frameResized)
+  {
+    window.frameResized = false;
+    recreate(context, *command, resourceManger);
+  }
+  else if (result != VK_SUCCESS)
+  {
+    throw std::runtime_error("Failed to present swapchain image");
+  }
+
+  m_currentFrame                       = (m_currentFrame + 1) % m_frameInFlight;
+  std::chrono::duration<float> elapsed = currentTime - lastTime;
+  deltaTime                            = elapsed.count();
+  lastTime                             = currentTime;
+}
+
+void Render::destroy()
+{
+  for (size_t i = 0; i < m_frameInFlight; i++)
+  {
+    vkDestroySemaphore(m_device, m_availableSemaphores[i], nullptr);
+    vkDestroyFence(m_device, m_inFlight[i], nullptr);
+  }
+  for (auto sem : m_finishedSemaphores)
+    vkDestroySemaphore(m_device, sem, nullptr);
+}
