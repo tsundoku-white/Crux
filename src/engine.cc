@@ -16,8 +16,14 @@ Engine::Engine()
   input.init(m_window);
 }
 
-bool Engine::running() { return !m_window.shouldClose(); }
-void Engine::close() { m_window.setShouldClose(true); }
+bool Engine::running()
+{
+  return !m_window.shouldClose();
+}
+void Engine::close()
+{
+  m_window.setShouldClose(true);
+}
 
 void Engine::render()
 {

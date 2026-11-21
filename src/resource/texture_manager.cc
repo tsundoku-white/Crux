@@ -8,7 +8,6 @@ void TextureManager::init(Context &context, Command &command)
 {
   // get device and store private and localy
   m_device = context.getDevice();
-  stbi_set_flip_vertically_on_load(true);
 
   // set the max count of textures
   VkDescriptorSetLayoutBinding binding {};
@@ -58,11 +57,17 @@ void TextureManager::init(Context &context, Command &command)
   // create a white texture.
   const uint8_t white[4] = {255, 255, 255, 255};
   add(context, command, "<white>", white, 1, 1, VK_FORMAT_R8G8B8A8_SRGB); // slot 0
+  const uint8_t flat[4] = {128, 128, 255, 255};
+  add(context, command, "<flat_normal>", flat, 1, 1, VK_FORMAT_R8G8B8A8_UNORM);
 }
 
-uint32_t TextureManager::load(Context &context, Command &command, const std::string &path)
+uint32_t
+TextureManager::load(Context &context, Command &command, const std::string &path, TextureKind kind)
 {
   // make sure the texture does not exist already.
+  const bool        srgb     = kind == TextureKind::Color;
+  const uint32_t    fallback = kind == TextureKind::Normal ? FLAT_NORMAL : 0u;
+  const std::string key      = srgb ? path : path + "|linear";
   if (auto it = m_cache.find(path); it != m_cache.end())
     return it->second;
 
@@ -73,8 +78,9 @@ uint32_t TextureManager::load(Context &context, Command &command, const std::str
   // if not find return this message.
   if (!pixels)
   {
-    std::print("texture not found, using white: {}\n", path);
-    return 0;
+    std::print("texture not found: {}\n", path);
+    m_cache[key] = fallback;
+    return fallback;
   }
 
   // create the resource for the image.
@@ -111,8 +117,13 @@ uint32_t TextureManager::loadHDR(Context &context, Command &command, const std::
   return index;
 }
 
-uint32_t TextureManager::add(Context &context, Command &command, const std::string &key,
-                             const void *rgba, uint32_t w, uint32_t h, VkFormat format)
+uint32_t TextureManager::add(Context           &context,
+                             Command           &command,
+                             const std::string &key,
+                             const void        *rgba,
+                             uint32_t           w,
+                             uint32_t           h,
+                             VkFormat           format)
 {
   // check if the texture thats being created does not exeed the max count.
   if (m_images.size() >= MAX_TEXTURES)

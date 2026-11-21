@@ -2,17 +2,15 @@
 
 #include "src/core/pch.hh"
 #include "src/resource/resource_manager.hh"
-#include "src/vulkan/command.hh"
-#include "src/vulkan/context.hh"
 #include "src/vulkan/depth_buffer.hh"
-#include "src/vulkan/descriptor.hh"
 #include "src/vulkan/msaa.hh"
-#include "src/vulkan/pipeline.hh"
 #include "src/resource/texture_manager.hh"
 
 class Command;
 class Context;
 class Pipeline;
+class Window;
+class Descriptor;
 
 class Render
 {
@@ -37,8 +35,13 @@ private:
 public:
   void init(Context &context, Command &command, DepthBuffer &depth_buffer, Msaa &msaa);
   void destroy();
-  void draw(Context &context, Window &window, Command *command, Pipeline &pipeline,
-            Descriptor &descriptor, TextureManager &textures, ResourceManager &resourceManager);
+  void draw(Context         &context,
+            Window          &window,
+            Command         *command,
+            Pipeline        &pipeline,
+            Descriptor      &descriptor,
+            TextureManager  &textures,
+            ResourceManager &resourceManager);
 
   float deltaTime = 0;
 };

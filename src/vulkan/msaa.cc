@@ -10,30 +10,24 @@ VkSampleCountFlagBits Msaa::getMaxUsableSampleCount(Context &context)
   vkGetPhysicalDeviceProperties(context.getPhysicalDevice(), &props);
 
   const VkSampleCountFlags counts =
-      props.limits.framebufferColorSampleCounts & props.limits.framebufferDepthSampleCounts;
+    props.limits.framebufferColorSampleCounts & props.limits.framebufferDepthSampleCounts;
 
-  // flag values equal the sample counts, so the highest set bit is the max count.
-  // (1_BIT is always supported, so counts is never 0.)
   return static_cast<VkSampleCountFlagBits>(std::bit_floor(counts));
 }
 
 void Msaa::init(Context &context, Command &command, VkFormat colorFormat, uint32_t samples)
 {
-  // clamp to what the GPU supports, round down to a power of two.
   const uint32_t maxSamples = getMaxUsableSampleCount(context);
   m_samples =
-      static_cast<VkSampleCountFlagBits>(std::bit_floor(std::clamp(samples, 1u, maxSamples)));
+    static_cast<VkSampleCountFlagBits>(std::bit_floor(std::clamp(samples, 1u, maxSamples)));
 
-  // drop any previous target first (safe on swapchain resize).
   m_image.destroy();
 
-  // msaa off: render straight into the swapchain, nothing to allocate.
   if (m_samples == VK_SAMPLE_COUNT_1_BIT)
     return;
 
   const VkExtent2D extent = context.getExtent2D();
 
-  // allocate() destroys any previous image + view, so this is safe on swapchain resize.
   m_image.allocate(context, extent.width, extent.height, 1, colorFormat,
                    VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, 0, m_samples);
   m_image.createView(VK_IMAGE_ASPECT_COLOR_BIT);

@@ -1,4 +1,5 @@
 #include "resource_manager.hh"
+#include "src/ecs/components/material.hh"
 #include "src/ecs/components/skybox.hh"
 #include "src/vulkan/buffer.hh"
 #include "src/vulkan/context.hh"
@@ -22,14 +23,16 @@ void ResourceManager::updateCamera()
 
     if (m_prespectiveUpdate)
     {
-      m_aspectRatio = static_cast<float>(m_context->getExtent2D().width) /
-                      static_cast<float>(m_context->getExtent2D().height);
+      m_aspectRatio = static_cast<float>(m_context->getExtent2D().width)
+                      / static_cast<float>(m_context->getExtent2D().height);
       m_ubo.projectionMatrix =
-          glm::perspective(glm::radians(camera->fov), m_aspectRatio, camera->near, camera->far);
+        glm::perspective(glm::radians(camera->fov), m_aspectRatio, camera->near, camera->far);
       m_ubo.projectionMatrix[1][1] *= -1.f;
+      m_ubo.cameraPos = glm::vec4(transform->location, 1.f);
+      m_ubo.debugView = false;
     }
     m_ubo.viewMatrix =
-        glm::lookAt(transform->location, transform->location + transform->forward, transform->up);
+      glm::lookAt(transform->location, transform->location + transform->forward, transform->up);
     m_descriptor->uploadToGPU(m_currentFrame, &m_ubo, sizeof(UBO), 0);
     break;
   }
@@ -55,8 +58,8 @@ bool ResourceManager::uploadMesh(Mesh &mesh)
   if (mesh.modelPath.empty() || mesh.indexBuffer.valid())
     return false; // nothing to load, or already uploaded
 
-  if (!loadMeshData(mesh.vertexData, mesh.indexData, mesh.modelPath) || mesh.vertexData.empty() ||
-      mesh.indexData.empty())
+  if (!loadMeshData(mesh.vertexData, mesh.indexData, mesh.modelPath) || mesh.vertexData.empty()
+      || mesh.indexData.empty())
   {
     std::print("Failed to load Mesh: {}\n", mesh.modelPath);
     mesh.modelPath.clear(); // don't retry every frame
@@ -68,7 +71,6 @@ bool ResourceManager::uploadMesh(Mesh &mesh)
                                  std::span {mesh.vertexData}.size_bytes());
   mesh.indexBuffer.createStatic(m_context, m_command, BufferKind::Index, mesh.indexData.data(),
                                 std::span {mesh.indexData}.size_bytes());
-  mesh.textureIndex = m_textures->load(*m_context, *m_command, mesh.texturePath);
   return true;
 }
 
@@ -96,6 +98,20 @@ void ResourceManager::cacheSkybox()
   }
 }
 
+void ResourceManager::createMaterials()
+{
+  auto &materials = m_registry->pool<Material>();
+  for (EntityID id : materials.entities())
+  {
+    Material *material  = materials.get(id);
+    material->baseIndex = m_textures->load(*m_context, *m_command, material->base);
+    material->normalIndex =
+      m_textures->load(*m_context, *m_command, material->normal, TextureKind::Normal);
+    material->roughnessIndex =
+      m_textures->load(*m_context, *m_command, material->roughness, TextureKind::Data);
+  }
+}
+
 void ResourceManager::buildDrawCalls()
 {
   m_drawCalls.clear();
@@ -108,21 +124,29 @@ void ResourceManager::buildDrawCalls()
   {
     const Mesh      *mesh      = meshes.get(id);
     const Transform *transform = transforms.get(id);
+    ObjectData       obj {};
     if (!mesh || !transform || !mesh->indexBuffer.valid())
       continue;
     if (m_objects.size() >= MAX_OBJECTS)
       break;
+    auto &materials = m_registry->pool<Material>();
+    if (const Material *mat = materials.get(id))
+    {
+      obj.textureIndex   = mat->baseIndex;
+      obj.normalIndex    = mat->normalIndex;
+      obj.roughnessIndex = mat->roughnessIndex;
+      obj.baseColor      = glm::vec4(mat->baseColor / 255.f, 1.f);
+    }
 
-    ObjectData obj {};
-    obj.model = glm::translate(glm::mat4(1.f), transform->location) *
-                glm::mat4_cast(transform->rotation) * glm::scale(glm::mat4(1.f), transform->scale);
-    obj.textureIndex = mesh->textureIndex;
+    obj.model = glm::translate(glm::mat4(1.f), transform->location)
+                * glm::mat4_cast(transform->rotation)
+                * glm::scale(glm::mat4(1.f), transform->scale);
 
     DrawCall d;
     d.vertexBuffer  = mesh->vertexBuffer.handle();
     d.indexBuffer   = mesh->indexBuffer.handle();
     d.indexCount    = mesh->indexCount;
-    d.firstInstance = static_cast<uint32_t>(m_objects.size()); // shader reads ssbo[firstInstance]
+    d.firstInstance = static_cast<uint32_t>(m_objects.size());
 
     m_objects.push_back(obj);
     m_drawCalls.push_back(d);
@@ -148,7 +172,7 @@ void ResourceManager::buildDrawCalls()
 
     m_objects.push_back(obj);
     m_skyDraw = d;
-    break; // one sky only
+    break;
   }
 
   // one upload for everything: meshes + sky
@@ -157,8 +181,11 @@ void ResourceManager::buildDrawCalls()
                                 static_cast<uint32_t>(m_objects.size() * sizeof(ObjectData)));
 }
 
-void ResourceManager::init(Registry &registry, Context &context, Descriptor &descriptor,
-                           Command &command, TextureManager &textures)
+void ResourceManager::init(Registry       &registry,
+                           Context        &context,
+                           Descriptor     &descriptor,
+                           Command        &command,
+                           TextureManager &textures)
 {
   m_textures   = &textures;
   m_registry   = &registry;
@@ -168,6 +195,7 @@ void ResourceManager::init(Registry &registry, Context &context, Descriptor &des
   m_entities   = registry.getEntityView();
 
   createModels();
+  createMaterials();
   cacheSkybox();
 }
 
@@ -175,6 +203,7 @@ void ResourceManager::update(uint32_t currentFrame)
 {
   m_currentFrame = currentFrame;
   createModels();
+  createMaterials();
   cacheSkybox();
   updateTransform();
   buildDrawCalls();
@@ -211,8 +240,9 @@ void ResourceManager::destroy()
   m_drawCalls.clear();
 }
 
-bool ResourceManager::loadMeshData(std::vector<Vertex> &vertices, std::vector<uint32_t> &indices,
-                                   const std::string &path)
+bool ResourceManager::loadMeshData(std::vector<Vertex>   &vertices,
+                                   std::vector<uint32_t> &indices,
+                                   const std::string     &path)
 {
   cgltf_options options = {};
   cgltf_data   *data    = nullptr;
@@ -220,8 +250,8 @@ bool ResourceManager::loadMeshData(std::vector<Vertex> &vertices, std::vector<ui
   if (cgltf_parse_file(&options, path.c_str(), &data) != cgltf_result_success)
     return false;
 
-  if (cgltf_load_buffers(&options, data, path.c_str()) != cgltf_result_success ||
-      cgltf_validate(data) != cgltf_result_success)
+  if (cgltf_load_buffers(&options, data, path.c_str()) != cgltf_result_success
+      || cgltf_validate(data) != cgltf_result_success)
   {
     cgltf_free(data);
     return false;
@@ -265,22 +295,22 @@ bool ResourceManager::loadMeshData(std::vector<Vertex> &vertices, std::vector<ui
 
           switch (attr.type)
           {
-          case cgltf_attribute_type_position:
-            v.pos = {f[0], f[1], f[2]};
-            break;
-          case cgltf_attribute_type_normal:
-            v.normal = {f[0], f[1], f[2]};
-            break;
-          case cgltf_attribute_type_texcoord:
-            if (attr.index == 0)
-              v.uv = {f[0], f[1]};
-            break;
-          case cgltf_attribute_type_color:
-            if (attr.index == 0)
-              v.color = glm::vec3 {1, 1, 1} * glm::vec3(f[0], f[1], f[2]);
-            break;
-          default:
-            break;
+            case cgltf_attribute_type_position:
+              v.pos = {f[0], f[1], f[2]};
+              break;
+            case cgltf_attribute_type_normal:
+              v.normal = {f[0], f[1], f[2]};
+              break;
+            case cgltf_attribute_type_texcoord:
+              if (attr.index == 0)
+                v.uv = {f[0], f[1]};
+              break;
+            case cgltf_attribute_type_color:
+              if (attr.index == 0)
+                v.color = glm::vec3 {1, 1, 1} * glm::vec3(f[0], f[1], f[2]);
+              break;
+            default:
+              break;
           }
         }
       }
@@ -288,8 +318,8 @@ bool ResourceManager::loadMeshData(std::vector<Vertex> &vertices, std::vector<ui
       if (prim.indices)
       {
         for (size_t i = 0; i < prim.indices->count; ++i)
-          indices.push_back(baseVertex +
-                            static_cast<uint32_t>(cgltf_accessor_read_index(prim.indices, i)));
+          indices.push_back(baseVertex
+                            + static_cast<uint32_t>(cgltf_accessor_read_index(prim.indices, i)));
       }
       else // non-indexed primitive
       {

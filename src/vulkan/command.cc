@@ -45,10 +45,15 @@ void Command::destroy()
     vkDestroyCommandPool(m_device, m_pool, nullptr);
 }
 
-static void transition(VkCommandBuffer cmd, VkImage image, VkImageLayout from, VkImageLayout to,
-                       VkPipelineStageFlags2 srcStage, VkAccessFlags2 srcAccess,
-                       VkPipelineStageFlags2 dstStage, VkAccessFlags2 dstAccess,
-                       VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT)
+static void transition(VkCommandBuffer       cmd,
+                       VkImage               image,
+                       VkImageLayout         from,
+                       VkImageLayout         to,
+                       VkPipelineStageFlags2 srcStage,
+                       VkAccessFlags2        srcAccess,
+                       VkPipelineStageFlags2 dstStage,
+                       VkAccessFlags2        dstAccess,
+                       VkImageAspectFlags    aspect = VK_IMAGE_ASPECT_COLOR_BIT)
 {
   VkImageMemoryBarrier2 b {};
   b.sType               = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
@@ -103,9 +108,15 @@ void Command::onceEnd(VkCommandBuffer commandBuffer)
   vkFreeCommandBuffers(m_device, m_pool, 1, &commandBuffer);
 }
 
-void Command::record(uint32_t currentFrame, uint32_t imageIndex, Context &context,
-                     Pipeline &pipeline, Descriptor &descriptor, VkDescriptorSet textureSet,
-                     DepthBuffer &depthBuffer, Msaa &msaa, std::span<const DrawCall> drawCalls,
+void Command::record(uint32_t                       currentFrame,
+                     uint32_t                       imageIndex,
+                     Context                       &context,
+                     Pipeline                      &pipeline,
+                     Descriptor                    &descriptor,
+                     VkDescriptorSet                textureSet,
+                     DepthBuffer                   &depthBuffer,
+                     Msaa                          &msaa,
+                     std::span<const DrawCall>      drawCalls,
                      const std::optional<DrawCall> &skyDraw)
 {
   VkCommandBuffer cmd    = m_buffers[currentFrame];
@@ -128,23 +139,20 @@ void Command::record(uint32_t currentFrame, uint32_t imageIndex, Context &contex
   // the msaa color image and the depth image are shared by every frame in flight, so make this
   // frame wait for the previous frame's writes before it clears them again.
   if (msaa.enabled())
-    transition(cmd, msaa.getImage(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-               VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-               VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-               VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT,
-               VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
-               VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
+    transition(
+      cmd, msaa.getImage(), VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+      VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+      VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT, VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT,
+      VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT);
 
-  transition(cmd, depthBuffer.getImage(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-             VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
-             VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT |
-                 VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
-             VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-             VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT |
-                 VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
-             VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
-                 VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-             VK_IMAGE_ASPECT_DEPTH_BIT);
+  transition(
+    cmd, depthBuffer.getImage(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+    VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+    VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+    VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+    VK_IMAGE_ASPECT_DEPTH_BIT);
 
   VkRenderingAttachmentInfo color {};
   color.sType            = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;

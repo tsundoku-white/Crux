@@ -1,0 +1,52 @@
+---
+Language: Cpp
+BasedOnStyle: Google
+
+# -- Layout (Google/K&R: attached braces, 2-space indent) ----------------
+IndentWidth: 2
+ContinuationIndentWidth: 4
+ColumnLimit: 100
+UseTab: Never
+AccessModifierOffset: -1
+NamespaceIndentation: None
+IndentCaseLabels: true
+FixNamespaceComments: true
+EmptyLineBeforeAccessModifier: LogicalBlock
+BreakBeforeBraces: Attach
+
+# -- Alignment: names, `=` and trailing comments line up in each run -----
+# Blank lines and comments break a run so unrelated groups don't stretch.
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+AlignConsecutiveMacros: Consecutive
+AlignTrailingComments: true
+AlignAfterOpenBracket: Align
+AlignOperands: Align
+
+# -- Wrapping ------------------------------------------------------------
+BreakConstructorInitializers: BeforeColon
+PackConstructorInitializers: NextLine
+BreakBeforeBinaryOperators: None
+BinPackParameters: false
+BinPackArguments: true
+
+# -- Pointers / braced lists / short forms -------------------------------
+PointerAlignment: Right
+Cpp11BracedListStyle: true
+SpaceBeforeCpp11BracedList: true
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortBlocksOnASingleLine: Empty
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortLambdasOnASingleLine: All
+
+# -- Includes: never reorder (pch / platform headers can depend on order) --
+SortIncludes: Never
+...

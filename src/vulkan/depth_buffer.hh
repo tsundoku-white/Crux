@@ -1,9 +1,11 @@
 #pragma once
 
-#include "src/vulkan/command.hh"
 #include "src/vulkan/context.hh"
 #include "src/vulkan/image.hh"
 #include <vulkan/vulkan_core.h>
+
+class Command;
+
 class DepthBuffer
 {
 private:
@@ -20,5 +22,5 @@ public:
   void destroy();
 
   VkImageView getView() { return m_image.getView(); }
-  VkImage     getImage() { return m_image.getImage(); }
+  VkImage getImage() { return m_image.getImage(); }
 };

@@ -4,25 +4,69 @@ BasedOnStyle: LLVM
 
 # -- Layout --------------------------------------------------------------
 IndentWidth: 2
-ContinuationIndentWidth: 4
+ContinuationIndentWidth: 2
 ColumnLimit: 100
 UseTab: Never
-BreakBeforeBraces: Allman
 AccessModifierOffset: -2
-NamespaceIndentation: All
+NamespaceIndentation: None        # was All: pushed everything 2-6 levels deep
+IndentCaseLabels: true            # case labels were flush with `switch`
+FixNamespaceComments: true
+EmptyLineBeforeAccessModifier: LogicalBlock
 
-# -- Alignment (class members, consecutive assignments) ------------------
-AlignConsecutiveDeclarations: Consecutive
-AlignConsecutiveAssignments: Consecutive
+# -- Braces (Allman, but empty bodies stay as `{}`) ----------------------
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: Always
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  BeforeLambdaBody: false
+  SplitEmptyFunction: false
+  SplitEmptyRecord: false
+  SplitEmptyNamespace: false
+
+  # -- Alignment -----------------------------------------------------------
+# Variable names and `=` line up in consecutive runs; blank lines and
+# comments break a run, so unrelated groups don't stretch each other.
+AlignConsecutiveDeclarations:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+  AlignFunctionDeclarations: false
+  AlignFunctionPointers: false
+AlignConsecutiveAssignments:
+  Enabled: true
+  AcrossEmptyLines: false
+  AcrossComments: false
+AlignConsecutiveMacros: Consecutive
 AlignTrailingComments: true
+AlignAfterOpenBracket: Align
 
-# -- Pointers / braces / spacing ------------------------------------------
+# -- Wrapping ------------------------------------------------------------
+BreakConstructorInitializers: BeforeComma
+PackConstructorInitializers: Never
+BreakBeforeBinaryOperators: NonAssignment
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackParameters: false
+BinPackArguments: true
+
+# -- Pointers / braced lists / short forms -------------------------------
 PointerAlignment: Right
 Cpp11BracedListStyle: true
-SpaceBeforeCpp11BracedList: true
-AllowShortFunctionsOnASingleLine: All
+SpaceBeforeCpp11BracedList: true 
+AllowShortFunctionsOnASingleLine: InlineOnly
+AllowShortBlocksOnASingleLine: Empty
 AllowShortIfStatementsOnASingleLine: Never
 AllowShortLoopsOnASingleLine: false
+AllowShortCaseLabelsOnASingleLine: false
+AllowShortLambdasOnASingleLine: All
 
 # -- Includes: never reorder (pch / platform headers can depend on order) --
 SortIncludes: Never

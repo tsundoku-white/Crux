@@ -6,5 +6,5 @@ struct Skybox
 {
   std::string texturePath  = TEXTURE_DIR "sky.hdr";
   uint32_t    textureIndex = 0;
-  Mesh        mesh {.texturePath = {}};
+  Mesh        mesh {};
 };

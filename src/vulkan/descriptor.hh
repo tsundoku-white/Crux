@@ -43,6 +43,6 @@ public:
     vmaFlushAllocation(m_allocator, m_ssboAllocs[currentFrame], 0, size);
   }
 
-  VkDescriptorSetLayout               getLayout() const { return m_layout; }
+  VkDescriptorSetLayout getLayout() const { return m_layout; }
   const std::vector<VkDescriptorSet> &getSets() const { return m_sets; }
 };

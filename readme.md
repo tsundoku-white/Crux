@@ -1,21 +1,20 @@
-## Crux 
+![screenshot](./docs/images/main.png)
 
-## What is done so far?
-- models loading, windowing, inputs, ecs.
+This is a framework that can render objects in 3D this is written in C++26.
 
-## What is the scope of the project?
+# features 
+- MSAA
+- ECS 
+- Input Handling
+- Vsync
+- Batching of Models & Textures
 
-- vulkan    (malti-threaded)
-- texture   (auto batching)
-- [X] models    (auto batching)
-- materials (pbr)
-- ecs       (sparse & dense)
-- msaa 
-- shadows 
-- colliders (box3d) 
-- skybox    (hdr)
-- UI system (lua scripting with hot reloading)
+# Yet to Come 
+- Collition shapes 
+- Shadows
+- Bloom 
+- Audio 
+- 2D Projection 
+- P2P networking
 
-## planned finish date mid 2027.
-
-more to come...
+for more info check [Archetecture](./docs/archetecture.md).

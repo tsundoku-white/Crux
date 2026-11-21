@@ -14,7 +14,7 @@ void Descriptor::init(Context &context, uint32_t framesInFlight)
   bindings[0].binding            = 0;
   bindings[0].descriptorType     = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
   bindings[0].descriptorCount    = 1;
-  bindings[0].stageFlags         = VK_SHADER_STAGE_VERTEX_BIT; // add FRAGMENT if needed
+  bindings[0].stageFlags         = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
   bindings[0].pImmutableSamplers = nullptr;
 
   bindings[1].binding            = 1;
@@ -72,8 +72,8 @@ void Descriptor::init(Context &context, uint32_t framesInFlight)
     allocCreate.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
     VmaAllocationInfo allocOut {};
-    if (vmaCreateBuffer(m_allocator, &bufInfo, &allocCreate, &m_buffers[i], &m_allocs[i],
-                        &allocOut) != VK_SUCCESS)
+    if (vmaCreateBuffer(m_allocator, &bufInfo, &allocCreate, &m_buffers[i], &m_allocs[i], &allocOut)
+        != VK_SUCCESS)
       throw std::runtime_error("failed to create UBO buffer!");
 
     m_mapped[i] = allocOut.pMappedData;
@@ -96,11 +96,12 @@ void Descriptor::init(Context &context, uint32_t framesInFlight)
     VmaAllocationCreateInfo allocCreate {};
     allocCreate.usage = VMA_MEMORY_USAGE_AUTO;
     allocCreate.flags =
-        VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
+      VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT | VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
     VmaAllocationInfo allocOut {};
     if (vmaCreateBuffer(m_allocator, &bufInfo, &allocCreate, &m_ssboBuffers[i], &m_ssboAllocs[i],
-                        &allocOut) != VK_SUCCESS)
+                        &allocOut)
+        != VK_SUCCESS)
       throw std::runtime_error("failed to create object SSBO!");
 
     m_ssboMapped[i] = allocOut.pMappedData;

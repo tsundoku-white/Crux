@@ -9,12 +9,24 @@
 class Context;
 class Command;
 
+enum class TextureKind
+{
+  Color,
+  Normal,
+  Data
+};
+
 class TextureManager
 {
 private:
   // helper
-  uint32_t add(Context &context, Command &command, const std::string &key, const void *rgba,
-               uint32_t w, uint32_t h, VkFormat format);
+  uint32_t add(Context           &context,
+               Command           &command,
+               const std::string &key,
+               const void        *rgba,
+               uint32_t           w,
+               uint32_t           h,
+               VkFormat           format);
 
   // private variables
   VkDevice              m_device = VK_NULL_HANDLE;
@@ -26,16 +38,22 @@ private:
   std::vector<Image>                        m_images;
   std::unordered_map<std::string, uint32_t> m_cache;
 
+  static constexpr uint32_t FLAT_NORMAL = 1;
+
 public:
   // static const
-  static constexpr uint32_t MAX_TEXTURES = 1024;
+  static constexpr uint32_t MAX_TEXTURES = 2048;
+
   // -- functions ----------
-  void     init(Context &context, Command &command);
-  void     destroy();
-  uint32_t load(Context &context, Command &command, const std::string &path);
+  void init(Context &context, Command &command);
+  void destroy();
+  uint32_t load(Context           &context,
+                Command           &command,
+                const std::string &path,
+                TextureKind        kind = TextureKind::Color);
   uint32_t loadHDR(Context &context, Command &command, const std::string &path);
 
   // -- getters ----------
   VkDescriptorSetLayout getLayout() const { return m_layout; }
-  VkDescriptorSet       getSet() const { return m_set; }
+  VkDescriptorSet getSet() const { return m_set; }
 };

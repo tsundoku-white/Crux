@@ -40,14 +40,9 @@ public:
   Input    input;
   Registry registery;
 
-  float deltaTime = 0;
-  // frames
+  float    deltaTime        = 0;
   uint32_t frames_in_flight = 3;
-
-  // msaa
-  bool     enable_msaa = true;
-  uint32_t sample_msaa = 8;
-
-  // vsync
-  bool enable_vsync = true;
+  bool     enable_msaa      = true;
+  uint32_t sample_msaa      = 8;
+  bool     enable_vsync     = true;
 };

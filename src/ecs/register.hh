@@ -7,6 +7,7 @@
 #include "components/transform.hh"
 #include "components/mesh.hh"
 #include "components/skybox.hh"
+#include "components/material.hh"
 
 #include <cstdint>
 #include <memory>

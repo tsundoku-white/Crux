@@ -48,9 +48,13 @@ void Context::init(Window &window, bool enabled_vsync)
   f13.dynamicRendering = VK_TRUE;
   f13.synchronization2 = VK_TRUE;
 
+  VkPhysicalDeviceFeatures f;
+  f.samplerAnisotropy = VK_TRUE;
+
   // creating physical device builder.
   vkb::PhysicalDeviceSelector selector {m_vkbInst};
   auto                        phys_ret = selector.set_surface(m_surface)
+                                             .set_required_features(f)
                                              .set_required_features_11(f11)
                                              .set_required_features_12(f12)
                                              .set_required_features_13(f13)

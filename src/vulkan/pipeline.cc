@@ -47,8 +47,10 @@ VkShaderModule Pipeline::createShaderModule(const std::vector<char> &code)
   return shaderModule;
 }
 
-void Pipeline::init(Context &context, Descriptor &descriptor, VkDescriptorSetLayout texLayout,
-                    Msaa &msaa)
+void Pipeline::init(Context              &context,
+                    Descriptor           &descriptor,
+                    VkDescriptorSetLayout texLayout,
+                    Msaa                 &msaa)
 {
   // get device and store as a local var.
   m_device = context.getDevice();
@@ -93,7 +95,7 @@ void Pipeline::init(Context &context, Descriptor &descriptor, VkDescriptorSetLay
   vertexInputInfo.vertexBindingDescriptionCount = 1;
   vertexInputInfo.pVertexBindingDescriptions    = &bindingDescription;
   vertexInputInfo.vertexAttributeDescriptionCount =
-      static_cast<uint32_t>(attributeDescriptions.size());
+    static_cast<uint32_t>(attributeDescriptions.size());
   vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
   // declaring that all mesh will be drawn as triangles.
@@ -145,8 +147,8 @@ void Pipeline::init(Context &context, Descriptor &descriptor, VkDescriptorSetLay
 
   // coloring fo the image.
   VkPipelineColorBlendAttachmentState colorBlendAttachment {};
-  colorBlendAttachment.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
-                                             VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+  colorBlendAttachment.colorWriteMask      = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
+                                             | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
   colorBlendAttachment.blendEnable         = VK_TRUE;
   colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
   colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -217,8 +219,8 @@ void Pipeline::init(Context &context, Descriptor &descriptor, VkDescriptorSetLay
   info.layout              = m_layout;
   info.renderPass          = VK_NULL_HANDLE;
 
-  if (vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &info, nullptr, &m_pipeline) !=
-      VK_SUCCESS)
+  if (vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &info, nullptr, &m_pipeline)
+      != VK_SUCCESS)
     throw std::runtime_error("failed to create graphics pipeline");
 
   // skybox Pipeline
@@ -231,8 +233,8 @@ void Pipeline::init(Context &context, Descriptor &descriptor, VkDescriptorSetLay
   info.pStages                  = skyStages;
   info.pVertexInputState        = &skyVertexInput;
 
-  if (vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &info, nullptr, &m_skyboxPipeline) !=
-      VK_SUCCESS)
+  if (vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &info, nullptr, &m_skyboxPipeline)
+      != VK_SUCCESS)
     throw std::runtime_error("failed to create sky pipeline");
 
   vkDestroyShaderModule(m_device, skyModule, nullptr);

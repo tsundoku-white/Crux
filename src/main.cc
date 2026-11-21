@@ -1,4 +1,6 @@
 #include "engine.hh"
+#include "src/ecs/components/material.hh"
+#include "src/ecs/components/mesh.hh"
 #include "src/ecs/components/skybox.hh"
 
 int main()
@@ -8,12 +10,17 @@ int main()
   engine.input.lockCursor(true);
 
   Entity freeCam =
-      engine.registery.create().add(Camera {.fov = 90.f}).add(Transform {.location = {0, 0, 7}});
+    engine.registery.create().add(Camera {.fov = 90.f}).add(Transform {.location = {0, 0, 7}});
 
-  Entity Model0 = engine.registery.create().add(Mesh {}).add(Transform {.scale = {10, 1, 10}});
-  Entity Model1 = engine.registery.create()
-                      .add(Mesh {.texturePath = TEXTURE_DIR "o_proto.png"})
-                      .add(Transform {.location = {0, 1, 0}});
+  Entity Model0 =
+    engine.registery.create().add(Transform {.scale = {10, 1, 10}}).add(Mesh {}).add(Material {});
+  Entity Model1 =
+    engine.registery.create()
+      .add(Transform {.location = {0, 2.4, 0},
+                      .rotation = glm::angleAxis(glm::radians(45.0f), glm::vec3(0.0f, 1.0f, 0.0f)),
+                      .scale    = {1, 1, 1}})
+      .add(Mesh {.modelPath = MODEL_DIR "capsule.glb"})
+      .add(Material {});
 
   Entity Sky = engine.registery.create().add(Skybox {});
 
@@ -56,7 +63,7 @@ int main()
     yaw -= mouse_dt.x * sensitivity;
     pitch = glm::clamp(pitch + mouse_dt.y * sensitivity, -maxPitch, maxPitch);
     cam.rotation =
-        glm::angleAxis(yaw, glm::vec3(0, 1, 0)) * glm::angleAxis(pitch, glm::vec3(1, 0, 0));
+      glm::angleAxis(yaw, glm::vec3(0, 1, 0)) * glm::angleAxis(pitch, glm::vec3(1, 0, 0));
 
     engine.render();
     i += engine.deltaTime;

@@ -25,16 +25,16 @@ void Render::createSyncObjects(uint32_t imageCount)
 
   for (size_t i = 0; i < m_frameInFlight; i++)
   {
-    if (vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_availableSemaphores[i]) !=
-            VK_SUCCESS ||
-        vkCreateFence(m_device, &fenceInfo, nullptr, &m_inFlight[i]) != VK_SUCCESS)
+    if (vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_availableSemaphores[i])
+          != VK_SUCCESS
+        || vkCreateFence(m_device, &fenceInfo, nullptr, &m_inFlight[i]) != VK_SUCCESS)
       throw std::runtime_error("failed to create synchronization objects");
   }
 
   for (size_t i = 0; i < imageCount; i++)
   {
-    if (vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_finishedSemaphores[i]) !=
-        VK_SUCCESS)
+    if (vkCreateSemaphore(m_device, &semaphoreInfo, nullptr, &m_finishedSemaphores[i])
+        != VK_SUCCESS)
       throw std::runtime_error("failed to create synchronization objects");
   }
 }
@@ -65,8 +65,13 @@ void Render::init(Context &context, Command &command, DepthBuffer &depthBuffer, 
 }
 
 auto lastTime = std::chrono::steady_clock::now();
-void Render::draw(Context &context, Window &window, Command *command, Pipeline &pipeline,
-                  Descriptor &descriptor, TextureManager &textures, ResourceManager &resourceManger)
+void Render::draw(Context         &context,
+                  Window          &window,
+                  Command         *command,
+                  Pipeline        &pipeline,
+                  Descriptor      &descriptor,
+                  TextureManager  &textures,
+                  ResourceManager &resourceManger)
 {
   vkWaitForFences(m_device, 1, &m_inFlight[m_currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -75,8 +80,8 @@ void Render::draw(Context &context, Window &window, Command *command, Pipeline &
   uint32_t       imageIndex;
 
   VkResult result =
-      vkAcquireNextImageKHR(m_device, swapchain, UINT64_MAX, m_availableSemaphores[m_currentFrame],
-                            VK_NULL_HANDLE, &imageIndex);
+    vkAcquireNextImageKHR(m_device, swapchain, UINT64_MAX, m_availableSemaphores[m_currentFrame],
+                          VK_NULL_HANDLE, &imageIndex);
 
   if (result == VK_ERROR_OUT_OF_DATE_KHR)
   {

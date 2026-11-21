@@ -36,17 +36,17 @@ public:
   void deviceWait() { vkDeviceWaitIdle(m_device); }
 
   // -- getters ----------
-  VkDevice                        getDevice() const { return m_device; }
-  VkPhysicalDevice                getPhysicalDevice() const { return m_physicalDevice; }
-  VkQueue                         getGraphicsQueue() const { return m_graphicsQueue; }
-  VkQueue                         getPresentQueue() const { return m_presentQueue; }
-  uint32_t                        getGraphicsFamily() const { return m_graphicsFamily; }
-  uint32_t                        getPresentFamily() const { return m_presentFamily; }
-  VkExtent2D                      getExtent2D() const { return m_vkbSwapchain.extent; }
-  VkSwapchainKHR                  getSwapchain() const { return m_vkbSwapchain.swapchain; }
-  VkFormat                        getImageFormat() const { return m_vkbSwapchain.image_format; }
-  uint32_t                        getImageCount() const { return m_vkbSwapchain.image_count; }
-  VmaAllocator                    getAllocator() const { return m_allocator; }
-  const std::vector<VkImage>     &getImages() const { return m_images; }
+  VkDevice getDevice() const { return m_device; }
+  VkPhysicalDevice getPhysicalDevice() const { return m_physicalDevice; }
+  VkQueue getGraphicsQueue() const { return m_graphicsQueue; }
+  VkQueue getPresentQueue() const { return m_presentQueue; }
+  uint32_t getGraphicsFamily() const { return m_graphicsFamily; }
+  uint32_t getPresentFamily() const { return m_presentFamily; }
+  VkExtent2D getExtent2D() const { return m_vkbSwapchain.extent; }
+  VkSwapchainKHR getSwapchain() const { return m_vkbSwapchain.swapchain; }
+  VkFormat getImageFormat() const { return m_vkbSwapchain.image_format; }
+  uint32_t getImageCount() const { return m_vkbSwapchain.image_count; }
+  VmaAllocator getAllocator() const { return m_allocator; }
+  const std::vector<VkImage> &getImages() const { return m_images; }
   const std::vector<VkImageView> &getImageViews() const { return m_imageViews; }
 };

@@ -11,16 +11,15 @@ void DepthBuffer::init(Context &context, Command &command, Msaa &msaa)
                    VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
                    VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT, msaa.getSamples());
   const VkImageAspectFlags aspect =
-      VK_IMAGE_ASPECT_DEPTH_BIT | (hasStencil(m_format) ? VK_IMAGE_ASPECT_STENCIL_BIT : 0);
+    VK_IMAGE_ASPECT_DEPTH_BIT | (hasStencil(m_format) ? VK_IMAGE_ASPECT_STENCIL_BIT : 0);
 
   VkCommandBuffer cmd = command.onceStart();
-  m_image.transition(cmd, VK_IMAGE_LAYOUT_UNDEFINED,
-                     VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, VK_PIPELINE_STAGE_2_NONE, 0,
-                     VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT |
-                         VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
-                     VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT |
-                         VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
-                     0, 1, aspect);
+  m_image.transition(
+    cmd, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+    VK_PIPELINE_STAGE_2_NONE, 0,
+    VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT,
+    VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+    0, 1, aspect);
   command.onceEnd(cmd);
 
   m_image.createView(aspect);

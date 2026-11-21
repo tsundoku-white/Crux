@@ -24,8 +24,11 @@ private:
   void           *m_mapped    = nullptr;
   VkDeviceAddress m_address   = 0;
 
-  void create_buffer(Context &context, VkDeviceSize size, VkBufferUsageFlags usage,
-                     VmaMemoryUsage memory_usage, VmaAllocationCreateFlags alloc_flags);
+  void create_buffer(Context                 &context,
+                     VkDeviceSize             size,
+                     VkBufferUsageFlags       usage,
+                     VmaMemoryUsage           memory_usage,
+                     VmaAllocationCreateFlags alloc_flags);
 
   void swap(Buffer &o) noexcept
   {
@@ -56,12 +59,16 @@ public:
 
   VkBuffer getBuffer() const { return m_buffer; }
   // GPU-only buffer, filled once through a staging copy.
-  void createStatic(Context *context, Command *command, BufferKind kind, const void *data,
-                    VkDeviceSize size, bool device_address = false);
+  void createStatic(Context     *context,
+                    Command     *command,
+                    BufferKind   kind,
+                    const void  *data,
+                    VkDeviceSize size,
+                    bool         device_address = false);
 
   // CPU-visible buffer you can update every frame.
-  void createDynamic(Context &context, BufferKind kind, VkDeviceSize size,
-                     bool device_address = false);
+  void
+  createDynamic(Context &context, BufferKind kind, VkDeviceSize size, bool device_address = false);
 
   // memcpy into the mapped memory (dynamic buffers only).
   void update(const void *data, VkDeviceSize size, VkDeviceSize offset = 0);
@@ -71,8 +78,8 @@ public:
 
   void copy(Context &context, Command &command, VkBuffer src, VkBuffer dst, VkDeviceSize size);
 
-  VkBuffer        handle() const { return m_buffer; }
-  VkDeviceSize    size() const { return m_size; }
+  VkBuffer handle() const { return m_buffer; }
+  VkDeviceSize size() const { return m_size; }
   VkDeviceAddress address() const { return m_address; }
-  bool            valid() const { return m_buffer != VK_NULL_HANDLE; }
+  bool valid() const { return m_buffer != VK_NULL_HANDLE; }
 };

@@ -16,10 +16,15 @@ struct UBO
     float4x4 view;
 };
 
+// must match ObjectData in draw_call.hh (96 bytes)
 struct SSBO
 {
     float4x4 model;
+    float4   baseColor;
     uint     textureIndex;
+    uint     normalIndex;
+    uint     roughnessIndex;
+    uint     pad;
 };
 
 [[vk::binding(0, 0)]] ConstantBuffer<UBO>    ubo;

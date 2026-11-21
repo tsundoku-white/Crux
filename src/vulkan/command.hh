@@ -23,17 +23,23 @@ private:
 
 public:
   // -- functions ---------
-  void            init(Context &context, uint32_t framesInFlight);
-  void            destroy();
+  void init(Context &context, uint32_t framesInFlight);
+  void destroy();
   VkCommandBuffer onceStart();
-  void            onceEnd(VkCommandBuffer commandBuffer);
+  void onceEnd(VkCommandBuffer commandBuffer);
   // -- gettters ---------
 
-  void record(uint32_t currentFrame, uint32_t imageIndex, Context &context, Pipeline &pipeline,
-              Descriptor &descriptor, VkDescriptorSet textureSet, DepthBuffer &depthBuffer,
-              Msaa &msaa, std::span<const DrawCall> drawCalls,
+  void record(uint32_t                       currentFrame,
+              uint32_t                       imageIndex,
+              Context                       &context,
+              Pipeline                      &pipeline,
+              Descriptor                    &descriptor,
+              VkDescriptorSet                textureSet,
+              DepthBuffer                   &depthBuffer,
+              Msaa                          &msaa,
+              std::span<const DrawCall>      drawCalls,
               const std::optional<DrawCall> &skyDraw);
 
   std::vector<VkCommandBuffer> getBuffers() { return m_buffers; }
-  VkCommandPool                getPool() const { return m_pool; }
+  VkCommandPool getPool() const { return m_pool; }
 };
